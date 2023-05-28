@@ -1,0 +1,102 @@
+        /* Define CSS Grid */
+        .wrapper {
+            display: grid;
+            grid-template-rows: auto 1fr auto;  /* Header, Main Content, Footer */
+            min-height: 100vh;
+        }
+
+        .header {
+            grid-row: 1;
+            text-align: center;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+
+        .main {
+            grid-row: 2;
+            display: grid;
+            grid-template-columns: 1fr 1fr;  /* Canvas, Button Container */
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .footer {
+            grid-row: 3;
+            text-align: center;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+
+        /* Add custom styles for the canvas */
+        .canvas-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+        }
+
+
+        #myCanvas {
+            background-color: #121212;            
+
+        }
+
+        .col-2{
+            background-color: #55768E;
+        }
+
+        .col-10{
+            background-color: blue;
+        }
+
+
+        
+        #headerSpace{
+            background-color: #182F4F;
+            font-size: 24px;
+            color: #E0E0E0;
+            min-height: 50px;
+        }
+
+        #canvasDiv{
+            overflow: auto; 
+            height: 100vh;
+            overflow-x: hidden;
+        }
+        .draggable-rect {
+            width: 80%;
+            position: relative;
+            background-color: #B28521;
+            margin: 10px;
+            border-radius: 5px;
+        }
+        
+        .draggable-rect::before {
+            content: "";
+            display: block;
+            padding-top: 50%;  /* this gives you a 2:1 width to height ratio */
+        }
+
+        #circleHandle {
+            position: absolute;
+            left: 0; /* Adjust this to position the handle relative to the left edge of the screen */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: #ddd;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        
+          
+          #leftMenuContainer {
+            position: relative; /* To position the handle relative to this container */
+          }
+          
+          
+        
+        
