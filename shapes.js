@@ -23,19 +23,28 @@ document.addEventListener('DOMContentLoaded', (event) => {
         event.preventDefault();
     });
 
-    // Handle drop event
-    canvas.addEventListener('drop', (event) => {
-        event.preventDefault();
+    
+// Define an array of objects, each containing an element id and the data to be set
+const draggableItems = [
+    { id: 'greenBlock', color: 'Green' },
+    { id: 'blueBlock', color: 'Blue' },
+    { id: 'orangeBlock', color: 'Orange' },
+    { id: 'redBlock', color: 'Red' },
+];
 
-        const x = event.offsetX 
-        const y = event.offsetY;
-        addRectangle(x, y)
-    });
+// Loop through the array and add the event listeners
+draggableItems.forEach(item => {
+    const element = document.getElementById(item.id);
 
-    // Handle drag start on the rectangle in the sidebar
-    document.getElementById('draggableRect').addEventListener('dragstart', (event) => {
-        event.dataTransfer.setData('text/plain', 'Drag Me');
-    });
+    if (element) {
+        element.addEventListener('dragstart', event => {
+            event.dataTransfer.setData('text/plain', item.color);
+        });
+    }
+});
+
+
+
     function handleMouseUp(event) {
         if (selectedShape && selectedShape.handle) {
           let endRect = null;
@@ -86,7 +95,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         context.clearRect(0, 0, canvas.width, canvas.height);
         rectangles.forEach(rect => {
             context.fillStyle = rect.color;
-            roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness);
+            roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.color);
     
             // Draw handles
             rect.handles.forEach(handle => {
@@ -223,12 +232,30 @@ document.addEventListener('DOMContentLoaded', (event) => {
         drawRectangles();
     }
     
+
+    
+    canvas.addEventListener('drop', (event) => {
+        event.preventDefault();
+        
+        const x = event.offsetX 
+        const y = event.offsetY;
+        let color = '#429053';
+        const draggedId = event.dataTransfer.getData('text');
+        if(draggedId== "Green"){color = '#429053'};
+        if(draggedId== "Blue"){color = '#0678FF'};
+        if(draggedId== "Orange"){color = '#F6993F'};
+        if(draggedId== "Red"){color = '#DB4437'};
+
+        
+    
+      
+        addRectangle(x, y, color)
+    });
     
     
     
     
-    
-    function addRectangle(x, y) {
+    function addRectangle(x, y, color) {
         const rectWidth = 100;
         const rectHeight = 50;
         const handleWidth = 20;
@@ -238,21 +265,21 @@ document.addEventListener('DOMContentLoaded', (event) => {
             y: y - rectHeight/2,
             width: rectWidth,
             height: rectHeight,
-            color: '#B28521',
+            color: color,
             handles: [
                 {
                     x: rectWidth / 2 - handleWidth / 2, 
                     y: 0,
                     width: handleWidth,
                     height: handleHeight,
-                    color: '#429053'
+                    color: '#FFFFFF'
                 },
                 {
                     x: rectWidth / 2 - handleWidth / 2,
                     y: rectHeight - handleHeight,
                     width: handleWidth,
                     height: handleHeight,
-                    color: '#429053'
+                    color: '#FFFFFF'
                 }
             ]
         };
@@ -294,7 +321,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         }
     }
 
-    function roundRect(ctx, x, y, width, height, roundness) {
+    function roundRect(ctx, x, y, width, height, roundness, rectColor) {
         const radius = Math.min(roundness, Math.min(width / 2, height / 2));
         const r = x + width;
         const b = y + height;
@@ -308,11 +335,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
         ctx.quadraticCurveTo(x, b, x, b - radius);
         ctx.lineTo(x, y + radius);
         ctx.quadraticCurveTo(x, y, x + radius, y);
-        ctx.fillStyle = '#B28521';
+        ctx.fillStyle = rectColor;
         ctx.fill();
     }
     
-    const addRectangleBtn = document.getElementById('addRectangleBtn');
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
@@ -334,6 +360,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     drawRectangles();
 });
+
+
+
 
 
 document.getElementById('circleHandle').addEventListener('click', function () {

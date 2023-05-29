@@ -34,20 +34,29 @@
         }
 
 
-        .draggable-rect {
-            width: 80%;
+        #greenBlock, #blueBlock, #orangeBlock, #redBlock{
+            width: 100px;
+            height: 50px;
             position: relative;
-            background-color: #B28521;
             margin: 10px;
             border-radius: 5px;
         }
         
-        .draggable-rect::before {
-            content: "";
-            display: block;
-            padding-top: 50%;  /* this gives you a 2:1 width to height ratio */
+        #greenBlock {
+            background-color: #429053;
         }
-
+        
+        #blueBlock {
+            background-color: #0678FF;
+        }
+        
+        #orangeBlock {
+            background-color: #F6993F;
+        }
+        #redBlock {
+            background-color: #DB4437;
+        }
+        
         #circleHandle {
             position: absolute;
             left: 180px; /* Adjust this to position the handle relative to the left edge of the screen */
@@ -69,6 +78,7 @@
             grid-column-gap: 0px;
             grid-row-gap: 0px;
             background-color: #182F4F;
+
             }
             
             .div1 { grid-area: 1 / 1 / 2 / 6; }
@@ -81,8 +91,14 @@
 
             #leftDock{
                 background-color: #182F4F;
-                display: block;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+
             }
+
+            
 
 
 
