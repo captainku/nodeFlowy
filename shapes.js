@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const canvasDiv = document.getElementById('canvasDiv');
     const canvas = document.getElementById('myCanvas');
     // set the width and height of the canvas to match the div
-    canvas.width = canvasDiv.offsetWidth*2;
-    canvas.height = canvasDiv.offsetWidth*2;
+    canvas.width = 5000;
+    canvas.height = 5000;
     const context = canvas.getContext('2d');
 
 
@@ -337,13 +337,15 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 
 document.getElementById('circleHandle').addEventListener('click', function () {
-    const leftMenuContainer = document.getElementById('leftMenuContainer');
+    const leftMenuContainer = document.getElementById('leftDock');
     var circleHandle = document.getElementById('circleHandle');
+    document.querySelector('.parent').style.gridTemplateColumns = '20px 1fr';
+
 
     const isHidden = leftMenuContainer.style.display === 'none';
     leftMenuContainer.style.display = isHidden ? 'block' : 'none';
-    var width = leftMenuContainer.offsetWidth;
-    circleHandle.style.left = isHidden ? width -20 + 'px' : '-20px'; // Adjust the '200px' as necessary
+    document.querySelector('.parent').style.gridTemplateColumns = isHidden ? '200px 1fr' : '20px 1fr';
+    circleHandle.style.left = isHidden ? '180px' : '0px'; // Adjust the '200px' as necessary
 });
 
 
@@ -351,12 +353,4 @@ document.getElementById('circleHandle').addEventListener('click', function () {
 
 
 
-  window.onload = function() {
-    var leftMenuContainer = document.getElementById('leftMenuContainer');
-    var circleHandle = document.getElementById('circleHandle');
-    var width = leftMenuContainer.offsetWidth;
 
-    // Add the width of the circleHandle itself so it's positioned to the right of the container
-    circleHandle.style.left = width -20 + 'px';
-  };
-  
