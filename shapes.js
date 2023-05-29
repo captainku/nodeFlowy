@@ -89,10 +89,14 @@ draggableItems.forEach(item => {
       
       
     
-    function drawRectangles() {
+      function drawRectangles() {
         const roundness = 10; // Adjust the roundness value here
     
         context.clearRect(0, 0, canvas.width, canvas.height);
+    
+        // Draw lines between rectangles first
+        drawLines();
+    
         rectangles.forEach(rect => {
             context.fillStyle = rect.color;
             roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.color);
@@ -104,6 +108,25 @@ draggableItems.forEach(item => {
             });
         });
     
+        // Draw the temporary line (from the selected handle to the current mouse position) over everything else
+        if (selectedShape && selectedShape.handle) {
+            const handleCenter = {
+                x: selectedShape.rectangle.x + selectedShape.handle.x + selectedShape.handle.width / 2,
+                y: selectedShape.rectangle.y + selectedShape.handle.y + selectedShape.handle.height / 2,
+            };
+            
+            context.beginPath();
+            context.moveTo(handleCenter.x, handleCenter.y);
+            context.lineTo(currentMousePosition.x, currentMousePosition.y);
+            context.strokeStyle = 'white';
+            context.stroke();
+    
+            // Reset the strokeStyle
+            context.strokeStyle = 'white';
+        }
+    }
+    
+    function drawLines() {
         // Draw lines between rectangles
         lines.forEach(line => {
             const startHandleCenter = {
@@ -135,25 +158,8 @@ draggableItems.forEach(item => {
             // Set strokeStyle back to white after each line
             context.strokeStyle = 'white';
         });
-        
-    
-        if (selectedShape && selectedShape.handle) {
-            const handleCenter = {
-                x: selectedShape.rectangle.x + selectedShape.handle.x + selectedShape.handle.width / 2,
-                y: selectedShape.rectangle.y + selectedShape.handle.y + selectedShape.handle.height / 2,
-            };
-            
-            context.beginPath();
-            context.moveTo(handleCenter.x, handleCenter.y);
-            context.lineTo(currentMousePosition.x, currentMousePosition.y);
-            // Ensure the temporary line is always white
-            context.strokeStyle = 'white';
-            context.stroke();
-
-            // Set strokeStyle back to white after the temporary line
-            context.strokeStyle = 'white';
-        }
     }
+    
     function isPointNearLine(line, mouseX, mouseY) {
         const startHandleCenter = {
             x: line.start.x + line.startHandle.x + line.startHandle.width / 2,
