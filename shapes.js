@@ -15,36 +15,37 @@ document.addEventListener('DOMContentLoaded', (event) => {
     let lines = [];
     const snapThreshold = 50; // Adjust the threshold as needed
 
-    let areControlPointsVisible = false;
 
-    document.getElementById('toggleButton').addEventListener('click', function() {
-        areControlPointsVisible = !areControlPointsVisible;
-        drawRectangles(); // or whatever function you use to redraw your canvas
-    });
+
 
     document.getElementById('btnAddCTLPT').addEventListener('click', function() {
-    /*    // Find the selected line
+        // Find the selected line
         const selectedLine = lines.find(line => line.selected);
     
         // If a line is selected
         if (selectedLine) {
-            console.log(selectedLine); // log the selected line object to the console
+            // Define lastPoint to be either the last control point or the start point
+            const lastPoint = selectedLine.controlPointsCount > 0 
+                ? selectedLine.controlPoint[selectedLine.controlPoint.length - 1]
+                : selectedLine.startHandleCenter;
+    
+            // Create a new control point at the middle of the last point and the end
+            const newControlPoint = {
+                x: (lastPoint.x + selectedLine.endHandleCenter.x) / 2,
+                y: (lastPoint.y + selectedLine.endHandleCenter.y) / 2
+            }
+    
+            // Add the new control point to the controlPoint array
+            selectedLine.controlPoint.push(newControlPoint);
+            selectedLine.controlPointsCount++;
         } else {
             console.log('No line is currently selected.');
         }
-
-        */
-
-        console.log(lines[0]);
-        lines[0].controlPoint[0] =                     {
-            x: (lines[0].startHandleCenter.x + lines[0].endHandleCenter.x) / 2,
-           y: (lines[0].startHandleCenter.y + lines[0].endHandleCenter.y) / 2
-        }
-
-        lines[0].controlPointsCount ++;
-
-
+    
+        drawRectangles();
     });
+    
+
 
     // Call the handleCanvasPanning function
     handleCanvasPanning(canvas, rectangles);
@@ -114,28 +115,29 @@ draggableItems.forEach(item => {
         }
     }
     
-    function drawLines() {
-        // Draw lines between rectangles
-        lines.forEach(line => {
-            const startHandleCenter = {
-                x: line.start.x + line.startHandle.x + line.startHandle.width / 2,
-                y: line.start.y + line.startHandle.y + line.startHandle.height / 2,
-            };
-            const endHandleCenter = {
-                x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
-                y: line.end.y + line.endHandle.y + line.endHandle.height / 2,
-            };
-    
-            context.beginPath();
-            context.strokeStyle = 'white';
-            context.moveTo(startHandleCenter.x, startHandleCenter.y);
-        if (line.controlPointsCount >0) {
-            context.lineTo(line.controlPoint[0].x, line.controlPoint[0].y);
-            context.lineTo(endHandleCenter.x, endHandleCenter.y);
-        } else {
-            context.lineTo(endHandleCenter.x, endHandleCenter.y);
+function drawLines() {
+    // Draw lines between rectangles
+    lines.forEach(line => {
+        const startHandleCenter = {
+            x: line.start.x + line.startHandle.x + line.startHandle.width / 2,
+            y: line.start.y + line.startHandle.y + line.startHandle.height / 2,
+        };
+        const endHandleCenter = {
+            x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
+            y: line.end.y + line.endHandle.y + line.endHandle.height / 2,
+        };
 
+        context.beginPath();
+        context.strokeStyle = 'white';
+        context.moveTo(startHandleCenter.x, startHandleCenter.y);
+
+        // Draw a line to each control point in order
+        for (let i = 0; i < line.controlPointsCount; i++) {
+            context.lineTo(line.controlPoint[i].x, line.controlPoint[i].y);
         }
+
+        // Draw a line to the end point
+        context.lineTo(endHandleCenter.x, endHandleCenter.y);
 
             
     
@@ -143,16 +145,22 @@ draggableItems.forEach(item => {
             context.stroke();
             // Set strokeStyle back to white after each line
             context.strokeStyle = 'white';
-    
-            if (areControlPointsVisible) {
+
+            if (line.selected) {
                 line.controlPoint.forEach(cp => {
+                    console.log(cp);
+
                     // Draw control point in the middle of the line
                     const midPointX = cp.x;
                     const midPointY = cp.y;
                     const controlPointSize = 10; // size of control point
                     context.beginPath();
                     context.arc(midPointX, midPointY, controlPointSize, 0, 2 * Math.PI, false);
-                    context.fillStyle = 'yellow'; // color of control point
+                    if(line.controlPointSelected){
+                        context.fillStyle = 'white';
+                    }
+                    else{context.fillStyle = 'yellow'; }
+                    
                     context.fill();
                 });
             }
@@ -167,7 +175,6 @@ draggableItems.forEach(item => {
             x: line.start.x + line.startHandle.x + line.startHandle.width / 2,
             y: line.start.y + line.startHandle.y + line.startHandle.height / 2,
         };
-        const controlPoint = line.controlPoint;
         const endHandleCenter = {
             x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
             y: line.end.y + line.endHandle.y + line.endHandle.height / 2,
@@ -175,45 +182,25 @@ draggableItems.forEach(item => {
     
         const threshold = 5; // You can adjust this value to whatever suits your needs
     
-// Check distance to line segment(s)
-for (let t = 0; t <= 1; t += 0.01) {
-    let pointOnLine;
-
-    if (controlPoint) {
-        // If control point exists, check distance to both line segments
-        const points = [
-            {
-                x: (1 - t) * startHandleCenter.x + t * controlPoint.x,
-                y: (1 - t) * startHandleCenter.y + t * controlPoint.y
-            },
-            {
-                x: (1 - t) * controlPoint.x + t * endHandleCenter.x,
-                y: (1 - t) * controlPoint.y + t * endHandleCenter.y
-            }
-        ];
-
-        for (let point of points) {
-            const distanceToCursor = Math.sqrt(Math.pow(point.x - mouseX, 2) + Math.pow(point.y - mouseY, 2));
-            if (distanceToCursor <= threshold) {
-                return true;
+        // Start with start handle and end handle, insert control points in between
+        const linePoints = [startHandleCenter, ...line.controlPoint, endHandleCenter];
+    
+        // Check distance to line segments
+        for (let t = 0; t <= 1; t += 0.01) {
+            for (let i = 0; i < linePoints.length - 1; i++) {
+                const pointOnLine = {
+                    x: (1 - t) * linePoints[i].x + t * linePoints[i + 1].x,
+                    y: (1 - t) * linePoints[i].y + t * linePoints[i + 1].y
+                };
+                const distanceToCursor = Math.sqrt(Math.pow(pointOnLine.x - mouseX, 2) + Math.pow(pointOnLine.y - mouseY, 2));
+    
+                if (distanceToCursor <= threshold) {
+                    return true;
+                }
             }
         }
-    } else {
-        // If control point does not exist, check distance to the single line segment
-        pointOnLine = {
-            x: (1 - t) * startHandleCenter.x + t * endHandleCenter.x,
-            y: (1 - t) * startHandleCenter.y + t * endHandleCenter.y
-        };
-
-        const distanceToCursor = Math.sqrt(Math.pow(pointOnLine.x - mouseX, 2) + Math.pow(pointOnLine.y - mouseY, 2));
-        if (distanceToCursor <= threshold) {
-            return true;
-        }
-    }
-}
-
-return false;
-
+    
+        return false;
     }
     
     
@@ -239,37 +226,7 @@ return false;
     
     
     
-    function addRectangle(x, y, color) {
-        const rectWidth = 100;
-        const rectHeight = 50;
-        const handleWidth = 20;
-        const handleHeight = 10;
-        const newRect = {
-            x: x - rectWidth/2,
-            y: y - rectHeight/2,
-            width: rectWidth,
-            height: rectHeight,
-            color: color,
-            handles: [
-                {
-                    x: rectWidth / 2 - handleWidth / 2, 
-                    y: 0,
-                    width: handleWidth,
-                    height: handleHeight,
-                    color: '#FFFFFF'
-                },
-                {
-                    x: rectWidth / 2 - handleWidth / 2,
-                    y: rectHeight - handleHeight,
-                    width: handleWidth,
-                    height: handleHeight,
-                    color: '#FFFFFF'
-                }
-            ]
-        };
-        rectangles.push(newRect);
-        drawRectangles();
-    }
+
 
 
 
@@ -292,25 +249,30 @@ return false;
     }
 
     function isMouseInsideControlPoint(line, mouseX, mouseY) {
-        console.log("Checking for Controlpoint");
-        if (line.controlPoint) {
-        const controlPointX = line.controlPoint.x;
-        const controlPointY = line.controlPoint.y;
-        
-        const distanceToCursor = Math.sqrt(Math.pow(controlPointX - mouseX, 2) + Math.pow(controlPointY - mouseY, 2));
-        if (areControlPointsVisible) {
-            return distanceToCursor <= 10; // 10 is the radius of the control point
+        console.log("Checking for CP moooo");
+        if (line.selected) {
+            for (let i = 0; i < line.controlPointsCount; i++) {
+                const controlPointX = line.controlPoint[i].x;
+                const controlPointY = line.controlPoint[i].y;
+                const distanceToCursor = Math.sqrt(Math.pow(controlPointX - mouseX, 2) + Math.pow(controlPointY - mouseY, 2));
+                if (distanceToCursor <= 20) {
+                    return true;
+                }
+            }
         }
-        }
+        return false;
     }
+    
     
 
 //MOUSE MOVEMENT CODE-------------------------------------------------------------------------
 
-//Mouse Down!---------------------    
+// Mouse Down!---------------------
+// Mouse Down!---------------------
 function handleMouseDown(event) {
     const rect = rectangles.find(rect => isMouseInsideRectangle(rect, event.offsetX, event.offsetY));
     let handle = null;
+    let clickedLine = null;
     if (rect) {
         handle = rect.handles.find(hdl => isMouseInsideHandle(rect, hdl, event.offsetX, event.offsetY));
         selectedShape = {
@@ -318,26 +280,37 @@ function handleMouseDown(event) {
             handle: handle
         };
     }
+
     // Check if a control point was clicked
-    
-    const clickedCP = lines.find(line => isMouseInsideControlPoint(line, event.offsetX, event.offsetY));
-    if (clickedCP) {
-        selectedShape = {
-            
-            controlPoint: { x: event.offsetX, y: event.offsetY },
-            line: clickedCP
-
-        };
-
-        console.log("Control Point Clicked");
-        console.log(selectedShape);
+    const clickedLineWithCP = lines.find(line => isMouseInsideControlPoint(line, event.offsetX, event.offsetY));
+    if (clickedLineWithCP) {
+        for (let i = 0; i < clickedLineWithCP.controlPointsCount; i++) {
+            const controlPoint = clickedLineWithCP.controlPoint[i];
+            const distanceToCursor = Math.sqrt(Math.pow(controlPoint.x - event.offsetX, 2) + Math.pow(controlPoint.y - event.offsetY, 2));
+            if (distanceToCursor <= 20) { // Same threshold as in isMouseInsideControlPoint
+                console.log("Clicked CP");
+                clickedLineWithCP.controlPointSelected = !clickedLineWithCP.controlPointSelected;
+                const midPointX = controlPoint.x;
+                const midPointY = controlPoint.y;
+                const controlPointSize = 20; // size of control point
+                context.beginPath();
+                context.arc(midPointX, midPointY, controlPointSize, 0, 2 * Math.PI, false);
+                context.fillStyle = 'white'; // color of control point
+                context.fill();
+                context.closePath();
+                context.stroke();
+                selectedShape = {
+                    controlPoint: { x: event.offsetX, y: event.offsetY, index: i },
+                    line: clickedLineWithCP
+                };
+                break;
+            }
+        }
     }
 
-
-
     // Ignore line selections if a rectangle handle is clicked
-    if (!handle &&  !clickedCP && event.button === 0) {
-        const clickedLine = lines.find(line => isPointNearLine(line, event.offsetX, event.offsetY));
+    if (!handle && !clickedLineWithCP && event.button === 0) {
+        clickedLine = lines.find(line => isPointNearLine(line, event.offsetX, event.offsetY));
         if (clickedLine) {
             // Toggle the 'selected' property
             clickedLine.selected = !clickedLine.selected;
@@ -353,8 +326,16 @@ function handleMouseDown(event) {
     // Update the currentMousePosition with the new coordinates
     currentMousePosition = { x: event.offsetX, y: event.offsetY };
 
+    if (!handle && !clickedLineWithCP && !clickedLine && !rect) {
+        lines.forEach(line => {
+            line.selected = false;
+            line.color = 'white';
+        });
+    }
+
     drawRectangles();
 }
+
 
 
 //Mouse Move!--------------------------------
@@ -383,11 +364,11 @@ function handleMouseMove(event) {
         }
 
         else if (selectedShape.controlPoint) {
+            console.log(selectedShape);
             selectedShape.controlPoint.x = event.offsetX;
             selectedShape.controlPoint.y = event.offsetY;
-            selectedShape.line.controlPoint.x = event.offsetX;
-            selectedShape.line.controlPoint.y = event.offsetY;
-            console.log(selectedShape.line.controlPoint);
+            selectedShape.line.controlPoint[selectedShape.controlPoint.index].x = event.offsetX;
+            selectedShape.line.controlPoint[selectedShape.controlPoint.index].y = event.offsetY;
         }
 
         drawRectangles();
@@ -448,6 +429,7 @@ function handleMouseMove(event) {
                 selected: false,
                 controlPoint: [],
                 controlPointsCount: 0, // Add this property
+                controlPointSelected: false,
                 isInitialDraw: true
             });
           }
@@ -457,23 +439,7 @@ function handleMouseMove(event) {
       }
     
 
-    function roundRect(ctx, x, y, width, height, roundness, rectColor) {
-        const radius = Math.min(roundness, Math.min(width / 2, height / 2));
-        const r = x + width;
-        const b = y + height;
-        ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.lineTo(r - radius, y);
-        ctx.quadraticCurveTo(r, y, r, y + radius);
-        ctx.lineTo(r, b - radius);
-        ctx.quadraticCurveTo(r, b, r - radius, b);
-        ctx.lineTo(x + radius, b);
-        ctx.quadraticCurveTo(x, b, x, b - radius);
-        ctx.lineTo(x, y + radius);
-        ctx.quadraticCurveTo(x, y, x + radius, y);
-        ctx.fillStyle = rectColor;
-        ctx.fill();
-    }
+    
     
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
@@ -483,7 +449,6 @@ function handleMouseMove(event) {
     });
     canvas.addEventListener('contextmenu', function (event) {
         event.preventDefault();
-        console.log(lines);
     
         // Filter the lines array to keep only the lines that are not selected
         lines = lines.filter(line => !line.selected);
@@ -495,6 +460,63 @@ function handleMouseMove(event) {
     
 
     drawRectangles();
+
+
+
+
+    //Code to create rectangles--------------------------------------------------------------------------------------
+function addRectangle(x, y, color) {
+    const rectWidth = 100;
+    const rectHeight = 50;
+    const handleWidth = 20;
+    const handleHeight = 10;
+    const newRect = {
+        x: x - rectWidth/2,
+        y: y - rectHeight/2,
+        width: rectWidth,
+        height: rectHeight,
+        color: color,
+        handles: [
+            {
+                x: rectWidth / 2 - handleWidth / 2, 
+                y: 0,
+                width: handleWidth,
+                height: handleHeight,
+                color: '#FFFFFF'
+            },
+            {
+                x: rectWidth / 2 - handleWidth / 2,
+                y: rectHeight - handleHeight,
+                width: handleWidth,
+                height: handleHeight,
+                color: '#FFFFFF'
+            }
+        ]
+    };
+    rectangles.push(newRect);
+    drawRectangles();
+}
+
+
+
+function roundRect(ctx, x, y, width, height, roundness, rectColor) {
+    const radius = Math.min(roundness, Math.min(width / 2, height / 2));
+    const r = x + width;
+    const b = y + height;
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(r - radius, y);
+    ctx.quadraticCurveTo(r, y, r, y + radius);
+    ctx.lineTo(r, b - radius);
+    ctx.quadraticCurveTo(r, b, r - radius, b);
+    ctx.lineTo(x + radius, b);
+    ctx.quadraticCurveTo(x, b, x, b - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.fillStyle = rectColor;
+    ctx.fill();
+}
+
 });
 
 
@@ -512,6 +534,11 @@ document.getElementById('circleHandle').addEventListener('click', function () {
     document.querySelector('.parent').style.gridTemplateColumns = isHidden ? '200px 1fr' : '20px 1fr';
     circleHandle.style.left = isHidden ? '180px' : '0px'; // Adjust the '200px' as necessary
 });
+
+
+
+
+
 
 
   
