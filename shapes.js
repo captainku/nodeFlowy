@@ -16,34 +16,93 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const snapThreshold = 50; // Adjust the threshold as needed
 
 
-
-
-    document.getElementById('btnAddCTLPT').addEventListener('click', function() {
+    function addControlPoint(x, y) {
         // Find the selected line
         const selectedLine = lines.find(line => line.selected);
     
         // If a line is selected
         if (selectedLine) {
             // Define lastPoint to be either the last control point or the start point
-            const lastPoint = selectedLine.controlPointsCount > 0 
+            const lastPoint = selectedLine.controlPointsCount > 0
                 ? selectedLine.controlPoint[selectedLine.controlPoint.length - 1]
                 : selectedLine.startHandleCenter;
     
-            // Create a new control point at the middle of the last point and the end
+            // Create a new control point at the clicked coordinates
             const newControlPoint = {
-                x: (lastPoint.x + selectedLine.endHandleCenter.x) / 2,
-                y: (lastPoint.y + selectedLine.endHandleCenter.y) / 2
+                x: x,
+                y: y,
+            };
+    
+            // Find the index where the new control point should be inserted
+            const insertionIndex = selectedLine.controlPoint.findIndex(cp => cp.y > y || (cp.y === y && cp.x > x));
+    
+            // Insert the new control point at the correct position
+            if (insertionIndex !== -1) {
+                selectedLine.controlPoint.splice(insertionIndex, 0, newControlPoint);
+            } else {
+                selectedLine.controlPoint.push(newControlPoint);
             }
     
-            // Add the new control point to the controlPoint array
-            selectedLine.controlPoint.push(newControlPoint);
             selectedLine.controlPointsCount++;
         } else {
             console.log('No line is currently selected.');
         }
     
         drawRectangles();
-    });
+    }
+    
+    
+    function deleteControlPoint(x, y) {
+        // Find the selected line
+        const selectedLine = lines.find(line => line.selected);
+    
+        // If a line is selected
+        if (selectedLine) {
+            // Initialize control point index to indicate no point found
+            let controlPointIndex = -1;
+    
+            // Iterate through all control points
+            for (let i = 0; i < selectedLine.controlPointsCount; i++) {
+                const controlPointX = selectedLine.controlPoint[i].x;
+                const controlPointY = selectedLine.controlPoint[i].y;
+                const distanceToCursor = Math.sqrt(Math.pow(controlPointX - x, 2) + Math.pow(controlPointY - y, 2));
+                
+                // If a control point is within the desired distance, save the index and break the loop
+                if (distanceToCursor <= 20) {
+                    controlPointIndex = i;
+                    break;
+                }
+            }
+    
+            // If a control point was found, remove it
+            if (controlPointIndex !== -1) {
+                selectedLine.controlPoint.splice(controlPointIndex, 1);
+                selectedLine.controlPointsCount--;
+            } else {
+                console.log('No control point found to delete.');
+            }
+        } else {
+            console.log('No line is currently selected.');
+        }
+    
+        drawRectangles();
+    }
+    
+    
+
+function lineInfo(){
+            // Find the selected line
+            const selectedLine = lines.find(line => line.selected);
+            console.log('Selected line:', selectedLine);
+}
+    
+    
+       
+
+
+window.addControlPoint=addControlPoint;
+window.deleteControlPoint=deleteControlPoint;
+window.lineInfo=lineInfo;
     
 
 
@@ -106,6 +165,7 @@ draggableItems.forEach(item => {
             context.moveTo(handleCenter.x, handleCenter.y);
             context.lineTo(currentMousePosition.x, currentMousePosition.y);
             context.strokeStyle = 'white';
+
             context.stroke();
 
 
@@ -115,57 +175,65 @@ draggableItems.forEach(item => {
         }
     }
     
-function drawLines() {
-    // Draw lines between rectangles
-    lines.forEach(line => {
-        const startHandleCenter = {
-            x: line.start.x + line.startHandle.x + line.startHandle.width / 2,
-            y: line.start.y + line.startHandle.y + line.startHandle.height / 2,
-        };
-        const endHandleCenter = {
-            x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
-            y: line.end.y + line.endHandle.y + line.endHandle.height / 2,
-        };
-
-        context.beginPath();
-        context.strokeStyle = 'white';
-        context.moveTo(startHandleCenter.x, startHandleCenter.y);
-
-        // Draw a line to each control point in order
-        for (let i = 0; i < line.controlPointsCount; i++) {
-            context.lineTo(line.controlPoint[i].x, line.controlPoint[i].y);
-        }
-
-        // Draw a line to the end point
-        context.lineTo(endHandleCenter.x, endHandleCenter.y);
-
-            
-    
-            context.strokeStyle = line.color;  // Use the  color of the line for the strokeStyle
-            context.stroke();
-            // Set strokeStyle back to white after each line
+    function drawLines() {
+        // Draw lines between rectangles
+        lines.forEach(line => {
+            const startHandleCenter = {
+                x: line.start.x + line.startHandle.x + line.startHandle.width / 2,
+                y: line.start.y + line.startHandle.y + line.startHandle.height / 2,
+            };
+            const endHandleCenter = {
+                x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
+                y: line.end.y + line.endHandle.y + line.endHandle.height / 2,
+            };
+            // Save context state
+            context.save();
+        
+            context.beginPath();
             context.strokeStyle = 'white';
-
+            context.shadowBlur = 15;
+            context.shadowColor = "rgb(59,146,240)"; 
+            context.moveTo(startHandleCenter.x, startHandleCenter.y);
+            context.lineTo(startHandleCenter.x, startHandleCenter.y+25);
+            
+            
+            
+            // Draw a line to each control point in order
+            for (let i = 0; i < line.controlPointsCount; i++) {
+                context.lineTo(line.controlPoint[i].x, line.controlPoint[i].y);
+            }
+    
+            // Draw a line to the end point
+            context.lineTo(endHandleCenter.x, endHandleCenter.y -25);
+            context.lineTo(endHandleCenter.x, endHandleCenter.y);
+    
+            context.strokeStyle = line.color; // Use the color of the line for the strokeStyle
+            context.stroke();
+            context.strokeStyle = 'white'; // Set strokeStyle back to white after each line
+            
+            context.restore();
             if (line.selected) {
                 line.controlPoint.forEach(cp => {
-                    console.log(cp);
-
                     // Draw control point in the middle of the line
                     const midPointX = cp.x;
                     const midPointY = cp.y;
-                    const controlPointSize = 10; // size of control point
+                    const controlPointSize = 10; // Size of control point
+    
                     context.beginPath();
                     context.arc(midPointX, midPointY, controlPointSize, 0, 2 * Math.PI, false);
-                    if(line.controlPointSelected){
+    
+                    if (line.controlPointSelected) {
                         context.fillStyle = 'white';
+                    } else {
+                        context.fillStyle = 'yellow';
                     }
-                    else{context.fillStyle = 'yellow'; }
-                    
+    
                     context.fill();
                 });
             }
         });
     }
+    
     
     
     
@@ -179,11 +247,21 @@ function drawLines() {
             x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
             y: line.end.y + line.endHandle.y + line.endHandle.height / 2,
         };
+        const startHandleCenterOffset = {
+            x: line.start.x + line.startHandle.x + line.startHandle.width / 2,
+            y: (line.start.y + line.startHandle.y + line.startHandle.height / 2)+25,
+        };
+        const endHandleCenterOffset = {
+            x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
+            y: (line.end.y + line.endHandle.y + line.endHandle.height / 2)-25,
+        };
+
+
     
-        const threshold = 5; // You can adjust this value to whatever suits your needs
+        const threshold = 10; // You can adjust this value to whatever suits your needs
     
         // Start with start handle and end handle, insert control points in between
-        const linePoints = [startHandleCenter, ...line.controlPoint, endHandleCenter];
+        const linePoints = [startHandleCenter,startHandleCenterOffset, ...line.controlPoint, endHandleCenterOffset, endHandleCenter];
     
         // Check distance to line segments
         for (let t = 0; t <= 1; t += 0.01) {
@@ -249,7 +327,6 @@ function drawLines() {
     }
 
     function isMouseInsideControlPoint(line, mouseX, mouseY) {
-        console.log("Checking for CP moooo");
         if (line.selected) {
             for (let i = 0; i < line.controlPointsCount; i++) {
                 const controlPointX = line.controlPoint[i].x;
@@ -288,7 +365,6 @@ function handleMouseDown(event) {
             const controlPoint = clickedLineWithCP.controlPoint[i];
             const distanceToCursor = Math.sqrt(Math.pow(controlPoint.x - event.offsetX, 2) + Math.pow(controlPoint.y - event.offsetY, 2));
             if (distanceToCursor <= 20) { // Same threshold as in isMouseInsideControlPoint
-                console.log("Clicked CP");
                 clickedLineWithCP.controlPointSelected = !clickedLineWithCP.controlPointSelected;
                 const midPointX = controlPoint.x;
                 const midPointY = controlPoint.y;
@@ -326,7 +402,7 @@ function handleMouseDown(event) {
     // Update the currentMousePosition with the new coordinates
     currentMousePosition = { x: event.offsetX, y: event.offsetY };
 
-    if (!handle && !clickedLineWithCP && !clickedLine && !rect) {
+    if (!handle && !clickedLineWithCP && !clickedLine && !rect && event.button === 0) {
         lines.forEach(line => {
             line.selected = false;
             line.color = 'white';
@@ -364,7 +440,6 @@ function handleMouseMove(event) {
         }
 
         else if (selectedShape.controlPoint) {
-            console.log(selectedShape);
             selectedShape.controlPoint.x = event.offsetX;
             selectedShape.controlPoint.y = event.offsetY;
             selectedShape.line.controlPoint[selectedShape.controlPoint.index].x = event.offsetX;
@@ -399,6 +474,8 @@ function handleMouseMove(event) {
                 minDistance = distance;
                 endRect = rect;
                 endHandle = handle;
+                let audio = new Audio('plug.mp3');
+                audio.play();
               }
             });
           });
@@ -413,7 +490,7 @@ function handleMouseMove(event) {
                 y: endRect.y + endHandle.y + endHandle.height / 2,
             };
             
-            // Snap to the end point handle
+
             lines.push({
         
                 start: selectedShape.rectangle,
@@ -435,8 +512,20 @@ function handleMouseMove(event) {
           }
         }
         selectedShape = null;
+
         drawRectangles();
       }
+
+    function deleteLine(){
+        
+            // Filter the lines array to keep only the lines that are not selected
+            lines = lines.filter(line => !line.selected);
+        
+            // Redraw the remaining lines
+            drawRectangles();
+    }
+
+    window.deleteLine = deleteLine;
     
 
     
@@ -447,15 +536,7 @@ function handleMouseMove(event) {
     canvas.addEventListener('contextmenu', function (event) {
         event.preventDefault();
     });
-    canvas.addEventListener('contextmenu', function (event) {
-        event.preventDefault();
-    
-        // Filter the lines array to keep only the lines that are not selected
-        lines = lines.filter(line => !line.selected);
-    
-        // Redraw the remaining lines
-        drawRectangles();
-    });
+
     
     
 
