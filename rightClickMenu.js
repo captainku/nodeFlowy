@@ -2,18 +2,17 @@
 
 var canvas = document.getElementById('myCanvas');
 var contextMenu = document.getElementById('contextMenu');
-
 canvas.addEventListener('contextmenu', function(e) {
     e.preventDefault();
 
     // Get canvas position
     const rect = canvas.getBoundingClientRect();
-    const x = e.pageX - rect.left;
-    const y = e.pageY - rect.top;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
     contextMenu.style.display = 'block';
-    contextMenu.style.left = e.pageX + 'px';
-    contextMenu.style.top = e.pageY + 'px';
+    contextMenu.style.left = e.pageX  + 'px';
+    contextMenu.style.top = e.pageY  + 'px';
 
     document.getElementById('option1').onclick = function() {
         addControlPoint(x, y);

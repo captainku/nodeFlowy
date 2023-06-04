@@ -1,7 +1,7 @@
 import handleCanvasPanning from './canvasHandler.js';
 
 document.addEventListener('DOMContentLoaded', (event) => {
-    const canvasDiv = document.getElementById('canvasDiv');
+    const canvasContainer  = document.getElementById('canvasDiv');
     const canvas = document.getElementById('myCanvas');
     // set the width and height of the canvas to match the div
     canvas.width = 5000;
@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
     let selectedShape = null;
     let currentMousePosition = { x: 0, y: 0 };
     let lines = [];
+    const controlPointSize = 10; // Size of control point
     const snapThreshold = 50; // Adjust the threshold as needed
+    let isMouseDown = false;
+    let startX, startY;
 
 
     function addControlPoint(x, y) {
@@ -186,38 +189,51 @@ draggableItems.forEach(item => {
                 x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
                 y: line.end.y + line.endHandle.y + line.endHandle.height / 2,
             };
-            // Save context state
+
+            const startHandleType = line.startHandle.handleType;
+            const endHandleType = line.endHandle.handleType;
+
+            const yDifference = endHandleCenter.y - startHandleCenter.y;
+            // Save context state, this makes sure glow only applies to lines
+            // Start line
             context.save();
-        
             context.beginPath();
             context.strokeStyle = 'white';
             context.shadowBlur = 15;
             context.shadowColor = "rgb(59,146,240)"; 
             context.moveTo(startHandleCenter.x, startHandleCenter.y);
-            context.lineTo(startHandleCenter.x, startHandleCenter.y+25);
-            
-            
-            
+
+            if (startHandleType == "top") {
+                context.lineTo(startHandleCenter.x, startHandleCenter.y-25);
+            } else {
+                context.lineTo(startHandleCenter.x, startHandleCenter.y+25);
+            }
+
             // Draw a line to each control point in order
             for (let i = 0; i < line.controlPointsCount; i++) {
                 context.lineTo(line.controlPoint[i].x, line.controlPoint[i].y);
             }
-    
+
             // Draw a line to the end point
-            context.lineTo(endHandleCenter.x, endHandleCenter.y -25);
+            if (endHandleType == "top") {
+                context.lineTo(endHandleCenter.x, endHandleCenter.y - 25);
+            } else {
+                context.lineTo(endHandleCenter.x, endHandleCenter.y + 25);
+            }
+
             context.lineTo(endHandleCenter.x, endHandleCenter.y);
-    
+
             context.strokeStyle = line.color; // Use the color of the line for the strokeStyle
             context.stroke();
             context.strokeStyle = 'white'; // Set strokeStyle back to white after each line
-            
             context.restore();
+
             if (line.selected) {
                 line.controlPoint.forEach(cp => {
                     // Draw control point in the middle of the line
                     const midPointX = cp.x;
                     const midPointY = cp.y;
-                    const controlPointSize = 10; // Size of control point
+
     
                     context.beginPath();
                     context.arc(midPointX, midPointY, controlPointSize, 0, 2 * Math.PI, false);
@@ -247,21 +263,23 @@ draggableItems.forEach(item => {
             x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
             y: line.end.y + line.endHandle.y + line.endHandle.height / 2,
         };
+    
+        const startHandleType = line.startHandle.handleType;
+        const endHandleType = line.endHandle.handleType;
+    
         const startHandleCenterOffset = {
-            x: line.start.x + line.startHandle.x + line.startHandle.width / 2,
-            y: (line.start.y + line.startHandle.y + line.startHandle.height / 2)+25,
+            x: startHandleCenter.x,
+            y: startHandleType == "top" ? startHandleCenter.y - 25 : startHandleCenter.y + 25,
         };
         const endHandleCenterOffset = {
-            x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
-            y: (line.end.y + line.endHandle.y + line.endHandle.height / 2)-25,
+            x: endHandleCenter.x,
+            y: endHandleType == "top" ? endHandleCenter.y - 25 : endHandleCenter.y + 25,
         };
-
-
     
         const threshold = 10; // You can adjust this value to whatever suits your needs
     
         // Start with start handle and end handle, insert control points in between
-        const linePoints = [startHandleCenter,startHandleCenterOffset, ...line.controlPoint, endHandleCenterOffset, endHandleCenter];
+        const linePoints = [startHandleCenter, startHandleCenterOffset, ...line.controlPoint, endHandleCenterOffset, endHandleCenter];
     
         // Check distance to line segments
         for (let t = 0; t <= 1; t += 0.01) {
@@ -280,6 +298,7 @@ draggableItems.forEach(item => {
     
         return false;
     }
+    
     
     
     
@@ -347,6 +366,9 @@ draggableItems.forEach(item => {
 // Mouse Down!---------------------
 // Mouse Down!---------------------
 function handleMouseDown(event) {
+    isMouseDown = true;
+    startX = event.clientX - canvasContainer.offsetLeft;
+    startY = event.clientY - canvasContainer.offsetTop;
     const rect = rectangles.find(rect => isMouseInsideRectangle(rect, event.offsetX, event.offsetY));
     let handle = null;
     let clickedLine = null;
@@ -416,6 +438,7 @@ function handleMouseDown(event) {
 
 //Mouse Move!--------------------------------
 function handleMouseMove(event) {
+    event.preventDefault();
     if (selectedShape) {
 
         // Current mouse position for the handle
@@ -448,6 +471,7 @@ function handleMouseMove(event) {
 
         drawRectangles();
     }
+
 }
 
 
@@ -455,6 +479,7 @@ function handleMouseMove(event) {
 
     //Mouse UP!!!
     function handleMouseUp(event) {
+        isMouseDown = false;
         if (selectedShape && selectedShape.handle) {
           let endRect = null;
           let endHandle = null;
@@ -496,6 +521,7 @@ function handleMouseMove(event) {
                 start: selectedShape.rectangle,
                 end: endRect,
                 startHandle: selectedShape.handle,
+                startHandleType: selectedShape.handleType,
                 endHandle: endHandle,
                 startHandleCenter: {x: selectedShape.rectangle.x + selectedShape.handle.x + selectedShape.handle.width / 2,
                 y: selectedShape.rectangle.y + selectedShape.handle.y + selectedShape.handle.height / 2,},
@@ -549,7 +575,7 @@ function handleMouseMove(event) {
 function addRectangle(x, y, color) {
     const rectWidth = 100;
     const rectHeight = 50;
-    const handleWidth = 20;
+    const handleWidth = 40;
     const handleHeight = 10;
     const newRect = {
         x: x - rectWidth/2,
@@ -563,14 +589,16 @@ function addRectangle(x, y, color) {
                 y: 0,
                 width: handleWidth,
                 height: handleHeight,
-                color: '#FFFFFF'
+                color: '#FFFFFF',
+                handleType: "top"
             },
             {
                 x: rectWidth / 2 - handleWidth / 2,
                 y: rectHeight - handleHeight,
                 width: handleWidth,
                 height: handleHeight,
-                color: '#FFFFFF'
+                color: '#FFFFFF',
+                handleType: "bottom"
             }
         ]
     };
