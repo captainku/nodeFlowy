@@ -13,10 +13,18 @@ document.addEventListener('DOMContentLoaded', (event) => {
     let selectedShape = null;
     let currentMousePosition = { x: 0, y: 0 };
     let lines = [];
+    let linesConnected = [];
+    let isInitialDraw;
     const controlPointSize = 10; // Size of control point
     const snapThreshold = 50; // Adjust the threshold as needed
     let isMouseDown = false;
     let startX, startY;
+    let shapeID =0 ;
+    let lineID =0;
+    let powerSource = false;
+    let powered = false;
+    let colorPowered = "#FFE01B";
+    let colorSelected = "#FFC23C";
 
 
     function addControlPoint(x, y) {
@@ -110,7 +118,7 @@ window.lineInfo=lineInfo;
 
 
     // Call the handleCanvasPanning function
-    handleCanvasPanning(canvas, rectangles);
+    handleCanvasPanning(canvas, rectangles, lines);
 
     // Allow canvas to accept drops
     canvas.addEventListener('dragover', (event) => {
@@ -124,6 +132,7 @@ const draggableItems = [
     { id: 'blueBlock', color: 'Blue' },
     { id: 'orangeBlock', color: 'Orange' },
     { id: 'redBlock', color: 'Red' },
+    { id: 'offBlock', color: 'Grey' }
 ];
 
 // Loop through the array and add the event listeners
@@ -147,14 +156,28 @@ draggableItems.forEach(item => {
         drawLines();
     
         rectangles.forEach(rect => {
-            context.fillStyle = rect.color;
-            roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.color);
-    
+            power(rect);
+            if(rect.powered){
+                context.fillStyle = rect.colorPowered;
+                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.colorPowered);
+            }
+            else if(rect.selected){
+                context.fillStyle = rect.colorSelected;
+                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.colorSelected);
+            }
+            
+            else{
+                context.fillStyle = rect.color;
+                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.color);
+            }
+
             // Draw handles
             rect.handles.forEach(handle => {
                 context.fillStyle = handle.color;
                 context.fillRect(rect.x + handle.x, rect.y + handle.y, handle.width, handle.height);
             });
+
+            
         });
     
         // Draw the temporary line (from the selected handle to the current mouse position) over everything else
@@ -190,6 +213,7 @@ draggableItems.forEach(item => {
                 y: line.end.y + line.endHandle.y + line.endHandle.height / 2,
             };
 
+
             const startHandleType = line.startHandle.handleType;
             const endHandleType = line.endHandle.handleType;
 
@@ -199,8 +223,7 @@ draggableItems.forEach(item => {
             context.save();
             context.beginPath();
             context.strokeStyle = 'white';
-            context.shadowBlur = 15;
-            context.shadowColor = "rgb(59,146,240)"; 
+
             context.moveTo(startHandleCenter.x, startHandleCenter.y);
 
             if (startHandleType == "top") {
@@ -247,7 +270,19 @@ draggableItems.forEach(item => {
                     context.fill();
                 });
             }
+
+            if(line.isInitialDraw == true)
+            {
+                
+                line.end.linesConnected.push(line);
+                line.start.linesConnected.push(line);
+                line.isInitialDraw = false;
+            }
+        
         });
+
+
+
     }
     
     
@@ -308,16 +343,22 @@ draggableItems.forEach(item => {
         const x = event.offsetX 
         const y = event.offsetY;
         let color = '#429053';
+
         const draggedId = event.dataTransfer.getData('text');
-        if(draggedId== "Green"){color = '#429053'};
-        if(draggedId== "Blue"){color = '#0678FF'};
+        if(draggedId== "Green"){
+            color = '#429053';
+            powerSource = true;
+        }
+        else{powerSource = false}
+        if(draggedId== "Blue"){
+            color = '#0678FF';
+        }
         if(draggedId== "Orange"){color = '#F6993F'};
         if(draggedId== "Red"){color = '#DB4437'};
+        if(draggedId== "Grey"){color = '#00060e'};
 
         
-    
-      
-        addRectangle(x, y, color)
+        addRectangle(x, y, color, powerSource)
     });
     
     
@@ -358,6 +399,8 @@ draggableItems.forEach(item => {
         }
         return false;
     }
+
+    window.isMouseInsideControlPoint = isMouseInsideControlPoint;
     
     
 
@@ -373,12 +416,18 @@ function handleMouseDown(event) {
     let handle = null;
     let clickedLine = null;
     if (rect) {
+        console.log(rect);
+        rect.selected = true;
         handle = rect.handles.find(hdl => isMouseInsideHandle(rect, hdl, event.offsetX, event.offsetY));
         selectedShape = {
             rectangle: rect,
             handle: handle
         };
     }
+
+    else{rectangles.forEach(rect => {
+        rect.selected = false;
+    });}
 
     // Check if a control point was clicked
     const clickedLineWithCP = lines.find(line => isMouseInsideControlPoint(line, event.offsetX, event.offsetY));
@@ -486,6 +535,7 @@ function handleMouseMove(event) {
           let minDistance = Infinity;
           
           rectangles.forEach(rect => {
+            console.log(rect);
             rect.handles.forEach(handle => {
               const handleCenter = {
                 x: rect.x + handle.x + handle.width / 2,
@@ -501,8 +551,12 @@ function handleMouseMove(event) {
                 endHandle = handle;
                 let audio = new Audio('plug.mp3');
                 audio.play();
+                lineID ++;
               }
             });
+            
+
+
           });
           
           if (endRect && endRect !== selectedShape.rectangle && endHandle) {
@@ -514,7 +568,13 @@ function handleMouseMove(event) {
                 x: endRect.x + endHandle.x + endHandle.width / 2,
                 y: endRect.y + endHandle.y + endHandle.height / 2,
             };
-            
+
+            if(selectedShape.rectangle.powered || endRect.powered == true){
+                powered = true;
+            }
+            else{
+                powered = false;
+            }
 
             lines.push({
         
@@ -533,7 +593,9 @@ function handleMouseMove(event) {
                 controlPoint: [],
                 controlPointsCount: 0, // Add this property
                 controlPointSelected: false,
-                isInitialDraw: true
+                isInitialDraw: true,
+                powered : powered,
+                lineID : lineID
             });
           }
         }
@@ -542,14 +604,46 @@ function handleMouseMove(event) {
         drawRectangles();
       }
 
-    function deleteLine(){
+      function deleteLine() {
+        lines.forEach(line => {
+            if (line.selected) {
+                rectangles.forEach(rect => {
+
+                    let tempLinesConnected = [...rect.linesConnected]; // Create a temporary copy for iteration
+                    tempLinesConnected.forEach(linesConnected => {
+                        if (linesConnected.lineID == line.lineID) {
+                            let indexToRemove = rect.linesConnected.indexOf(linesConnected);
+                            if (indexToRemove > -1) { // Make sure the element was found in the array
+                                rect.linesConnected.splice(indexToRemove, 1);
+                            }
+                        }
+                    });
+                });
+            }
+        });
+    
         
-            // Filter the lines array to keep only the lines that are not selected
-            lines = lines.filter(line => !line.selected);
+         //Check if we should delete rectangle if selected
+        rectangles.forEach(rect => {
+            if(rect.selected){
+
+                rect.linesConnected.forEach(linecon => {//This block will find each line connected to a deleted rect and remove the lines.
+                   lines.find(line => line.LineID === linecon.id).selected = true;
+                   lines = lines.filter(line => !line.selected);
+                });
+            }
+        });
+        lines = lines.filter(line => !line.selected);
+        rectangles = rectangles.filter(rect => !rect.selected);
+
+        rectangles.forEach(rect => {
+            power(rect);
+        });
         
-            // Redraw the remaining lines
-            drawRectangles();
+        // Redraw the remaining lines
+        drawRectangles();
     }
+    
 
     window.deleteLine = deleteLine;
     
@@ -568,11 +662,33 @@ function handleMouseMove(event) {
 
     drawRectangles();
 
+//Power folow code ⚡⚡⚡------------------------------------------------
+
+function power(rect){
+
+    rect.linesConnected.forEach(lineConnected => 
+     {
+
+        if(lineConnected.powered == true){
+            rect.powered = true;
+        }
+     }
+    );
+
+    if(rect.linesConnected.length === 0 && rect.powerSource == false) {
+        rect.powered = false;
+    }
+
+}
+
+
 
 
 
     //Code to create rectangles--------------------------------------------------------------------------------------
-function addRectangle(x, y, color) {
+function addRectangle(x, y, color, powerSource) {
+    if(powerSource ){powered = true};
+    shapeID++;
     const rectWidth = 100;
     const rectHeight = 50;
     const handleWidth = 40;
@@ -583,6 +699,11 @@ function addRectangle(x, y, color) {
         width: rectWidth,
         height: rectHeight,
         color: color,
+        colorPowered : colorPowered,
+        shapeID: shapeID,
+        linesConnected :[],
+        powerSource : powerSource,
+        powered : powered,
         handles: [
             {
                 x: rectWidth / 2 - handleWidth / 2, 

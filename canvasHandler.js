@@ -1,7 +1,8 @@
-function handleCanvasPanning(canvas, rectangles) {
+function handleCanvasPanning(canvas, rectangles,lines) {
     let isPanning = false;
     let lastMousePosition = { x: 0, y: 0 };
     const canvasDiv = canvas.parentElement;
+    let onCTRLPT = false;
 
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
@@ -29,7 +30,18 @@ function handleCanvasPanning(canvas, rectangles) {
     }
 
     function handleMouseDown(event) {
-        if ((event.button === 0 || event.button === 1) && !isClickInsideAnyRectangle(event)) { 
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            if (isMouseInsideControlPoint(line, event.offsetX, event.offsetY)) {
+              onCTRLPT =true;
+            }
+            else{
+                onCTRLPT = false;
+            }
+
+          }
+
+        if ((event.button === 0 || event.button === 1) && !isClickInsideAnyRectangle(event) && !onCTRLPT) { 
             isPanning = true;
             lastMousePosition = { x: event.clientX, y: event.clientY };
             event.preventDefault(); 

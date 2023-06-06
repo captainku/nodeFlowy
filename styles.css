@@ -37,7 +37,7 @@
         }
 
 
-        #greenBlock, #blueBlock, #orangeBlock, #redBlock{
+        .draggable-rect{
             width: 100px;
             height: 50px;
             position: relative;
@@ -58,6 +58,9 @@
         }
         #redBlock {
             background-color: #DB4437;
+        }
+        #offBlock {
+            background-color: #00060e;
         }
         
         #circleHandle {

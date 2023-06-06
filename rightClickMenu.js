@@ -28,6 +28,15 @@ canvas.addEventListener('contextmenu', function(e) {
         deleteLine();
         contextMenu.style.display = 'none';
     };
+    document.getElementById('option4').onclick = function() {
+        lineInfo();
+        contextMenu.style.display = 'none';
+    };
+    document.getElementById('option5').onclick = function() {
+        animate();
+
+        contextMenu.style.display = 'none';
+    };
 
     window.onclick = function(e) {
         if (e.button !== 2) {
