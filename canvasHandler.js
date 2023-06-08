@@ -30,21 +30,21 @@ function handleCanvasPanning(canvas, rectangles,lines) {
     }
 
     function handleMouseDown(event) {
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            if (isMouseInsideControlPoint(line, event.offsetX, event.offsetY)) {
-              onCTRLPT =true;
+        if (event.button === 1) { // Check if middle mouse button is pressed
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (isMouseInsideControlPoint(line, event.offsetX, event.offsetY)) {
+                  onCTRLPT = true;
+                } else {
+                    onCTRLPT = false;
+                }
             }
-            else{
-                onCTRLPT = false;
+    
+            if (!isClickInsideAnyRectangle(event) && !onCTRLPT) {
+                isPanning = true;
+                lastMousePosition = { x: event.clientX, y: event.clientY };
+                event.preventDefault(); 
             }
-
-          }
-
-        if ((event.button === 0 || event.button === 1) && !isClickInsideAnyRectangle(event) && !onCTRLPT) { 
-            isPanning = true;
-            lastMousePosition = { x: event.clientX, y: event.clientY };
-            event.preventDefault(); 
         }
     }
 
@@ -73,3 +73,4 @@ function handleCanvasPanning(canvas, rectangles,lines) {
 }
 
 export default handleCanvasPanning;
+

@@ -20,6 +20,9 @@
                 <div id="orangeBlock" draggable="true" class="draggable-rect"></div>
                 <div id="redBlock" draggable="true" class="draggable-rect"></div>
                 <div id="offBlock" draggable="true" class="draggable-rect"></div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
+                    Open Modal
+                  </button>
             </div>
             <div id="circleHandle"></div>
         </div>
@@ -38,13 +41,44 @@
             <li id="option2">- Control Point</li>
             <li id="option3">Delete</li>
             <li id="option4">Line Info</li>
-            <li id="option5">Play</li>
+            <li id="option5">Edit Info</li>
 
         </ul>
     </div>
 
+
+      <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="myModalLabel">Modal title</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form>
+                <div class="mb-3">
+                  <label for="titleInput" class="form-label">Title</label>
+                  <input type="text" class="form-control" id="titleInput">
+                </div>
+                <div class="mb-3">
+                  <label for="shapeIDInput" class="form-label">ShapeID</label>
+                  <input type="text" class="form-control" id="shapeIDInput" readonly>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" id="saveChangesButton">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+            
+      
+
     <script src="shapes.js" type="module"></script>
     <script src="rightClickMenu.js" type="module"></script>
+    <script src="dataHandler.js" type="module"></script>
     <!-- Add Bootstrap 5 JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

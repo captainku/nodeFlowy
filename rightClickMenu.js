@@ -33,9 +33,9 @@ canvas.addEventListener('contextmenu', function(e) {
         contextMenu.style.display = 'none';
     };
     document.getElementById('option5').onclick = function() {
-        animate();
-
         contextMenu.style.display = 'none';
+        var myModal = new bootstrap.Modal(document.getElementById('myModal'));
+        myModal.show();
     };
 
     window.onclick = function(e) {

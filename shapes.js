@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     let powered = false;
     let colorPowered = "#FFE01B";
     let colorSelected = "#FFC23C";
+    const shapeSelectedBordercolor = "#FFC23C";
+    let shapSelectedBorder = 3;
 
 
     function addControlPoint(x, y) {
@@ -159,16 +161,19 @@ draggableItems.forEach(item => {
             power(rect);
             if(rect.powered){
                 context.fillStyle = rect.colorPowered;
-                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.colorPowered);
+                shapSelectedBorder =0;
+                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.colorPowered, shapeSelectedBordercolor, shapSelectedBorder);
             }
             else if(rect.selected){
-                context.fillStyle = rect.colorSelected;
-                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.colorSelected);
+                context.fillStyle = rect.color;
+                shapSelectedBorder = 3;
+                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.colorSelected, shapeSelectedBordercolor, shapSelectedBorder);
             }
             
             else{
                 context.fillStyle = rect.color;
-                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.color);
+                shapSelectedBorder = 0;
+                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.color,shapeSelectedBordercolor, shapSelectedBorder);
             }
 
             // Draw handles
@@ -415,14 +420,18 @@ function handleMouseDown(event) {
     const rect = rectangles.find(rect => isMouseInsideRectangle(rect, event.offsetX, event.offsetY));
     let handle = null;
     let clickedLine = null;
-    if (rect) {
+    if (rect ) {
         console.log(rect);
-        rect.selected = true;
+        addShapeData(rect);
+        
         handle = rect.handles.find(hdl => isMouseInsideHandle(rect, hdl, event.offsetX, event.offsetY));
         selectedShape = {
             rectangle: rect,
             handle: handle
         };
+
+        if(!handle){rect.selected = true;}
+        
     }
 
     else{rectangles.forEach(rect => {
@@ -729,7 +738,7 @@ function addRectangle(x, y, color, powerSource) {
 
 
 
-function roundRect(ctx, x, y, width, height, roundness, rectColor) {
+function roundRect(ctx, x, y, width, height, roundness, rectColor, borderColor, borderWidth) {
     const radius = Math.min(roundness, Math.min(width / 2, height / 2));
     const r = x + width;
     const b = y + height;
@@ -745,6 +754,14 @@ function roundRect(ctx, x, y, width, height, roundness, rectColor) {
     ctx.quadraticCurveTo(x, y, x + radius, y);
     ctx.fillStyle = rectColor;
     ctx.fill();
+
+
+
+    if(borderWidth > 0) {
+        ctx.lineWidth = borderWidth;
+        ctx.strokeStyle = borderColor;
+        ctx.stroke();
+    }
 }
 
 });
