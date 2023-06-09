@@ -182,6 +182,18 @@ draggableItems.forEach(item => {
                 context.fillRect(rect.x + handle.x, rect.y + handle.y, handle.width, handle.height);
             });
 
+            let text = nameHandle(rect.shapeID);
+
+// Add text to rectangle
+context.font = "14px Arial"; // Set your desired font properties
+context.fillStyle = "black"; // Choose a color for the text
+context.textAlign = "center"; // Center the text horizontally
+context.textBaseline = "middle"; // Center the text vertically
+
+
+// Draw the text
+context.fillText(text, rect.x + rect.width / 2, rect.y + rect.height / 2);
+
             
         });
     
@@ -205,6 +217,8 @@ draggableItems.forEach(item => {
             context.strokeStyle = 'white';
         }
     }
+
+    window.drawRectangles = drawRectangles;
     
     function drawLines() {
         // Draw lines between rectangles
@@ -429,9 +443,13 @@ function handleMouseDown(event) {
             rectangle: rect,
             handle: handle
         };
+        rectangles.forEach(rect => {
+            rect.selected = false;
+        });
 
-        if(!handle){rect.selected = true;}
-        
+        if(!handle){
+            
+            rect.selected = true;}
     }
 
     else{rectangles.forEach(rect => {
@@ -488,6 +506,7 @@ function handleMouseDown(event) {
             line.color = 'white';
         });
     }
+    
 
     drawRectangles();
 }
@@ -558,7 +577,7 @@ function handleMouseMove(event) {
                 minDistance = distance;
                 endRect = rect;
                 endHandle = handle;
-                let audio = new Audio('plug.mp3');
+                let audio = new Audio('Assets/plug.mp3');
                 audio.play();
                 lineID ++;
               }
@@ -612,6 +631,25 @@ function handleMouseMove(event) {
 
         drawRectangles();
       }
+
+      canvas.addEventListener('dblclick', function(e) {
+        // Get the mouse position relative to the canvas
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+      
+        // Use your function to check if the click occurred within the rectangle's bounds
+        if (isMouseInsideRectangle(rect, x, y)) {
+            var myModal = new bootstrap.Modal(document.getElementById('myModal'));
+            myModal.show();
+        }
+      });
+      
+
+
+
+
+
 
       function deleteLine() {
         lines.forEach(line => {
@@ -732,6 +770,7 @@ function addRectangle(x, y, color, powerSource) {
             }
         ]
     };
+    addShapeData(newRect);
     rectangles.push(newRect);
     drawRectangles();
 }

@@ -38,9 +38,24 @@ canvas.addEventListener('contextmenu', function(e) {
         myModal.show();
     };
 
+
+      
+
     window.onclick = function(e) {
         if (e.button !== 2) {
             contextMenu.style.display = 'none';
         }
     };
 });
+
+
+document.addEventListener('keydown', function(event) {
+    var myModal = document.getElementById('myModal');
+    var saveChangesButton = document.getElementById('saveChangesButton');
+    var isModalShown = window.getComputedStyle(myModal).display !== 'none';
+
+    if (isModalShown && event.key === 'Enter') {
+        saveChangesButton.click();
+    }
+});
+

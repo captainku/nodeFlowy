@@ -17,7 +17,7 @@ function addShapeData(rect){
     // Create a new object to store the shape data
     let shapeData = {
         shapeID: shapeID,
-        title: title, // add title property here
+        title:"Shape " + shapeID  // add title property here
         // You can add more properties here as needed
     };
 
@@ -27,6 +27,8 @@ function addShapeData(rect){
     }
     
     updateModal(shapeID, title);
+    drawRectangles();
+
 }
 
 function updateModal(shapeID, title){
@@ -57,10 +59,24 @@ document.getElementById('saveChangesButton').addEventListener('click', function(
     var myModal = bootstrap.Modal.getInstance(document.getElementById('myModal'));
     myModal.hide();
 
+    drawRectangles();
+
 });
 
 
 
+function nameHandle(shapeID){
+    
+    let index = shapeDataArray.findIndex(shapeData => shapeData.shapeID === shapeID);
+    
+   // If found, update the title of the shape data
+   if (index !== -1) {
+       return shapeDataArray[index].title;
+   }
+}
 
+
+
+window.nameHandle = nameHandle;
 window.addShapeData = addShapeData;
 
