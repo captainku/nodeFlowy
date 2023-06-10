@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const shapeSelectedBordercolor = "#FFC23C";
     let shapSelectedBorder = 3;
 
+    let lineColor = "#182F4F"
+    let lineWidth = 3;
+
 
     function addControlPoint(x, y) {
         // Find the selected line
@@ -149,74 +152,70 @@ draggableItems.forEach(item => {
 });
 
 
-      function drawRectangles() {
-        const roundness = 10; // Adjust the roundness value here
-    
-        context.clearRect(0, 0, canvas.width, canvas.height);
-    
-        // Draw lines between rectangles first
-        drawLines();
-    
-        rectangles.forEach(rect => {
-            power(rect);
-            if(rect.powered){
-                context.fillStyle = rect.colorPowered;
-                shapSelectedBorder =0;
-                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.colorPowered, shapeSelectedBordercolor, shapSelectedBorder);
-            }
-            else if(rect.selected){
-                context.fillStyle = rect.color;
-                shapSelectedBorder = 3;
-                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.colorSelected, shapeSelectedBordercolor, shapSelectedBorder);
-            }
-            
-            else{
-                context.fillStyle = rect.color;
-                shapSelectedBorder = 0;
-                roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.color,shapeSelectedBordercolor, shapSelectedBorder);
-            }
+function drawRectangles() {
+    const roundness = 10; // Adjust the roundness value here
 
-            // Draw handles
-            rect.handles.forEach(handle => {
-                context.fillStyle = handle.color;
-                context.fillRect(rect.x + handle.x, rect.y + handle.y, handle.width, handle.height);
-            });
+    context.clearRect(0, 0, canvas.width, canvas.height);
 
-            let text = nameHandle(rect.shapeID);
+    // Draw lines between rectangles first
+    drawLines();
 
-// Add text to rectangle
-context.font = "14px Arial"; // Set your desired font properties
-context.fillStyle = "black"; // Choose a color for the text
-context.textAlign = "center"; // Center the text horizontally
-context.textBaseline = "middle"; // Center the text vertically
-
-
-// Draw the text
-context.fillText(text, rect.x + rect.width / 2, rect.y + rect.height / 2);
-
-            
-        });
-    
-        // Draw the temporary line (from the selected handle to the current mouse position) over everything else
-        if (selectedShape && selectedShape.handle) {
-            const handleCenter = {
-                x: selectedShape.rectangle.x + selectedShape.handle.x + selectedShape.handle.width / 2,
-                y: selectedShape.rectangle.y + selectedShape.handle.y + selectedShape.handle.height / 2,
-            };
-            
-            context.beginPath();
-            context.moveTo(handleCenter.x, handleCenter.y);
-            context.lineTo(currentMousePosition.x, currentMousePosition.y);
-            context.strokeStyle = 'white';
-
-            context.stroke();
-
-
-    
-            // Reset the strokeStyle
-            context.strokeStyle = 'white';
+    rectangles.forEach(rect => {
+        power(rect);
+        if (rect.powered) {
+            context.fillStyle = rect.colorPowered;
+            shapSelectedBorder = 0;
+            roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.colorPowered, shapeSelectedBordercolor, shapSelectedBorder);
+        } else if (rect.selected) {
+            context.fillStyle = rect.color;
+            shapSelectedBorder = 3;
+            roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.colorSelected, shapeSelectedBordercolor, shapSelectedBorder);
+        } else {
+            context.fillStyle = rect.color;
+            shapSelectedBorder = 0;
+            roundRect(context, rect.x, rect.y, rect.width, rect.height, roundness, rect.color, shapeSelectedBordercolor, shapSelectedBorder);
         }
+
+        // Draw handles
+        rect.handles.forEach(handle => {
+            context.fillStyle = handle.color;
+            context.fillRect(rect.x + handle.x, rect.y + handle.y, handle.width, handle.height);
+
+            // Draw handle borders
+            context.strokeStyle = handle.borderColor;
+            context.lineWidth = 1;
+            context.strokeRect(rect.x + handle.x, rect.y + handle.y, handle.width, handle.height);
+        });
+
+        let text = nameHandle(rect.shapeID);
+
+        // Add text to rectangle
+        context.font = "14px Arial";
+        context.fillStyle = "black";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(text, rect.x + rect.width / 2, rect.y + rect.height / 2);
+    });
+
+    // Draw the temporary line (from the selected handle to the current mouse position) over everything else
+    if (selectedShape && selectedShape.handle) {
+        const handleCenter = {
+            x: selectedShape.rectangle.x + selectedShape.handle.x + selectedShape.handle.width / 2,
+            y: selectedShape.rectangle.y + selectedShape.handle.y + selectedShape.handle.height / 2,
+        };
+
+        context.beginPath();
+        context.moveTo(handleCenter.x, handleCenter.y);
+        context.lineTo(currentMousePosition.x, currentMousePosition.y);
+        context.strokeStyle = lineColor;
+        context.lineWidth = lineWidth;
+        context.stroke();
+
+        // Reset the strokeStyle
+        context.strokeStyle = lineColor;
     }
+}
+
 
     window.drawRectangles = drawRectangles;
     
@@ -241,14 +240,21 @@ context.fillText(text, rect.x + rect.width / 2, rect.y + rect.height / 2);
             // Start line
             context.save();
             context.beginPath();
-            context.strokeStyle = 'white';
+            context.strokeStyle = lineColor;
+            context.lineWidth = lineWidth;
 
             context.moveTo(startHandleCenter.x, startHandleCenter.y);
 
             if (startHandleType == "top") {
                 context.lineTo(startHandleCenter.x, startHandleCenter.y-25);
-            } else {
+            } else if(startHandleType == "bottom"){
                 context.lineTo(startHandleCenter.x, startHandleCenter.y+25);
+            }
+            else if(startHandleType == "leftside"){
+                context.lineTo(startHandleCenter.x-25, startHandleCenter.y);
+            }
+            else if(startHandleType == "rightside"){
+                context.lineTo(startHandleCenter.x+25, startHandleCenter.y);
             }
 
             // Draw a line to each control point in order
@@ -257,17 +263,25 @@ context.fillText(text, rect.x + rect.width / 2, rect.y + rect.height / 2);
             }
 
             // Draw a line to the end point
+            console.log(startHandleType);
             if (endHandleType == "top") {
                 context.lineTo(endHandleCenter.x, endHandleCenter.y - 25);
-            } else {
-                context.lineTo(endHandleCenter.x, endHandleCenter.y + 25);
+            }  else if(endHandleType == "bottom"){
+                context.lineTo(endHandleCenter.x, endHandleCenter.y+25);
+            }
+            else if(endHandleType == "leftside"){
+                context.lineTo(endHandleCenter.x-25, endHandleCenter.y);
+            }
+            else if(endHandleType == "rightside"){
+                console.log("Using Right offset");
+                context.lineTo(endHandleCenter.x+25, endHandleCenter.y);
             }
 
             context.lineTo(endHandleCenter.x, endHandleCenter.y);
 
             context.strokeStyle = line.color; // Use the color of the line for the strokeStyle
             context.stroke();
-            context.strokeStyle = 'white'; // Set strokeStyle back to white after each line
+            context.strokeStyle = lineColor; // Set strokeStyle back to white after each line
             context.restore();
 
             if (line.selected) {
@@ -281,7 +295,7 @@ context.fillText(text, rect.x + rect.width / 2, rect.y + rect.height / 2);
                     context.arc(midPointX, midPointY, controlPointSize, 0, 2 * Math.PI, false);
     
                     if (line.controlPointSelected) {
-                        context.fillStyle = 'white';
+                        context.fillStyle = lineColor;
                     } else {
                         context.fillStyle = 'yellow';
                     }
@@ -322,12 +336,12 @@ context.fillText(text, rect.x + rect.width / 2, rect.y + rect.height / 2);
         const endHandleType = line.endHandle.handleType;
     
         const startHandleCenterOffset = {
-            x: startHandleCenter.x,
-            y: startHandleType == "top" ? startHandleCenter.y - 25 : startHandleCenter.y + 25,
+            x: startHandleType == "leftside" ? startHandleCenter.x - 25 : startHandleType == "rightside" ? startHandleCenter.x + 25 : startHandleCenter.x,
+            y: startHandleType == "top" ? startHandleCenter.y - 25 : startHandleType == "bottom" ? startHandleCenter.y + 25 : startHandleCenter.y,
         };
         const endHandleCenterOffset = {
-            x: endHandleCenter.x,
-            y: endHandleType == "top" ? endHandleCenter.y - 25 : endHandleCenter.y + 25,
+            x: endHandleType == "leftside" ? endHandleCenter.x - 25 : endHandleType == "rightside" ? endHandleCenter.x + 25 : endHandleCenter.x,
+            y: endHandleType == "top" ? endHandleCenter.y - 25 : endHandleType == "bottom" ? endHandleCenter.y + 25 : endHandleCenter.y,
         };
     
         const threshold = 10; // You can adjust this value to whatever suits your needs
@@ -469,7 +483,7 @@ function handleMouseDown(event) {
                 const controlPointSize = 20; // size of control point
                 context.beginPath();
                 context.arc(midPointX, midPointY, controlPointSize, 0, 2 * Math.PI, false);
-                context.fillStyle = 'white'; // color of control point
+                context.fillStyle = lineColor; // color of control point
                 context.fill();
                 context.closePath();
                 context.stroke();
@@ -493,7 +507,7 @@ function handleMouseDown(event) {
             };
 
             // Change the color based on the 'selected' state
-            clickedLine.color = clickedLine.selected ? '#FF0000' : 'white';
+            clickedLine.color = clickedLine.selected ? '#FF0000' : lineColor;
         }
     }
 
@@ -503,7 +517,7 @@ function handleMouseDown(event) {
     if (!handle && !clickedLineWithCP && !clickedLine && !rect && event.button === 0) {
         lines.forEach(line => {
             line.selected = false;
-            line.color = 'white';
+            line.color = lineColor;
         });
     }
     
@@ -616,7 +630,7 @@ function handleMouseMove(event) {
                 endHandleCenter: {
                     x: endRect.x + endHandle.x + endHandle.width / 2,
                     y: endRect.y + endHandle.y + endHandle.height / 2,},
-                color: 'white',
+                color: lineColor,
                 selected: false,
                 controlPoint: [],
                 controlPointsCount: 0, // Add this property
@@ -739,7 +753,10 @@ function addRectangle(x, y, color, powerSource) {
     const rectWidth = 100;
     const rectHeight = 50;
     const handleWidth = 40;
-    const handleHeight = 10;
+    const handleHeight = 8;
+    const sideHandleWidth = 8;
+    const sideHandleHeight = 20;
+    const handleColor = "#FFFFFF";
     const newRect = {
         x: x - rectWidth/2,
         y: y - rectHeight/2,
@@ -757,7 +774,8 @@ function addRectangle(x, y, color, powerSource) {
                 y: 0,
                 width: handleWidth,
                 height: handleHeight,
-                color: '#FFFFFF',
+                color: color, // Set the handle's color to the rectangle's color
+                borderColor: handleColor, // Set the handle's border color to the handleColor
                 handleType: "top"
             },
             {
@@ -765,8 +783,27 @@ function addRectangle(x, y, color, powerSource) {
                 y: rectHeight - handleHeight,
                 width: handleWidth,
                 height: handleHeight,
-                color: '#FFFFFF',
+                color: color,
+                borderColor: handleColor,
                 handleType: "bottom"
+            },
+            {
+                x: 0 ,
+                y: rectHeight / 2 - sideHandleHeight/ 2,
+                width: sideHandleWidth,
+                height: sideHandleHeight,
+                color: color,
+                borderColor: handleColor,
+                handleType: "leftside"
+            },
+            {
+                x: rectWidth  - sideHandleWidth ,
+                y: rectHeight / 2 - sideHandleHeight/ 2,
+                width: sideHandleWidth,
+                height: sideHandleHeight,
+                color: color,
+                borderColor: handleColor,
+                handleType: "rightside"
             }
         ]
     };
