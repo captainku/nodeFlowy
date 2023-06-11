@@ -38,18 +38,14 @@ function updateModal(shapeID, title){
 
 
 document.getElementById('saveChangesButton').addEventListener('click', function() {
-    console.log("Save Clicked");
     let title = document.getElementById('titleInput').value;
     let shapeID = Number(document.getElementById('shapeIDInput').value);
 
     // Find the index of the shape data with the matching shapeID
     let index = shapeDataArray.findIndex(shapeData => shapeData.shapeID === shapeID);
-     console.log(shapeID)   
-    console.log(index);
     // If found, update the title of the shape data
     if (index !== -1) {
         shapeDataArray[index].title = title;
-        console.log("Updated array")
     }
 
 
