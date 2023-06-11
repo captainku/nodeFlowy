@@ -7,6 +7,7 @@ let startX, startY;
 let selectedShape;
 let lineID =0;
 let currentMousePosition = { x: 0, y: 0 };
+let lastMousePosition = { x: 0, y: 0 };
 const snapThreshold = 50; // Adjust the threshold as needed
 
 let powerSource = false;
@@ -14,38 +15,48 @@ let powered = false;
 let lineColor = "#182F4F"
 
 
+
 const context = canvas.getContext('2d');
 
 //MOUSE MOVEMENT CODE-------------------------------------------------------------------------
 
 // Mouse Down!---------------------
-// Mouse Down!---------------------
 function handleMouseDown(event) {
     isMouseDown = true;
+    // Update the lastMousePosition at the end of mouse move event
+    lastMousePosition = { x: event.offsetX, y: event.offsetY };
     startX = event.clientX - canvasContainer.offsetLeft;
     startY = event.clientY - canvasContainer.offsetTop;
     let rect = rectangles.find(rect => isMouseInsideRectangle(rect, event.offsetX, event.offsetY));
     let handle = null;
     let clickedLine = null;
-    if (rect ) {
+    if (rect) {
         addShapeData(rect);
         handle = rect.handles.find(hdl => isMouseInsideHandle(rect, hdl, event.offsetX, event.offsetY));
         selectedShape = {
             rectangle: rect,
             handle: handle
         };
+
+        if(!handle){
+            // set selected to true without changing the state of all other rectangles
+            rect.selected = true;
+
+            // If Ctrl key is not held down, clear other selections
+            if (!event.ctrlKey) {
+                rectangles.forEach(otherRect => {
+                    if (otherRect != rect) {
+                        otherRect.selected = false;
+                    }
+                });
+            }
+        }
+    } else {
+        // If click is not on a rectangle, clear all selected rectangles
         rectangles.forEach(rect => {
             rect.selected = false;
         });
-
-        if(!handle){
-            
-            rect.selected = true;}
     }
-
-    else{rectangles.forEach(rect => {
-        rect.selected = false;
-    });}
 
     // Check if a control point was clicked
     const clickedLineWithCP = lines.find(line => isMouseInsideControlPoint(line, event.offsetX, event.offsetY));
@@ -108,6 +119,10 @@ function handleMouseDown(event) {
 function handleMouseMove(event) {
     event.preventDefault();
     if (selectedShape) {
+        
+            // Calculate the change in mouse position
+    let deltaX = event.offsetX - lastMousePosition.x;
+    let deltaY = event.offsetY - lastMousePosition.y;
         // Current mouse position for the handle
         if (selectedShape.handle) {
              currentMousePosition = { x: event.offsetX, y: event.offsetY };
@@ -115,8 +130,20 @@ function handleMouseMove(event) {
 
         // Change position of the selected rectangle
         else if (selectedShape.rectangle) {
-            selectedShape.rectangle.x = event.offsetX - (selectedShape.rectangle.width / 2);
-            selectedShape.rectangle.y = event.offsetY - (selectedShape.rectangle.height / 2);
+            // Update the last mouse position
+            lastMousePosition = { x: event.offsetX, y: event.offsetY };
+
+            // If a rectangle is selected
+            if (selectedShape.rectangle) {
+                // Move all shapes relative to the mouse movement
+                rectangles.forEach(rect => {
+                    if(rect.selected){                    
+                        rect.x += deltaX;
+                        rect.y += deltaY;}
+
+                });
+            }
+
             lines.forEach(line => {
                 if (line.start === selectedShape.rectangle) {
                     line.startHandleCenter.x = line.start.x + line.startHandle.x + line.startHandle.width / 2;
