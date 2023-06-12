@@ -1,7 +1,14 @@
 // Define variables 
-let shapeDataArray = [];
+ let shapeDataArray = [];
 let shapeID;
 let title;
+
+
+function setShapeDataArray(newArray) {
+    shapeDataArray = newArray;
+}
+export { shapeDataArray, setShapeDataArray };
+
 
 function addShapeData(rect){
     shapeID = rect.shapeID;

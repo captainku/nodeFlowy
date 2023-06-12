@@ -1,6 +1,18 @@
 import handleCanvasPanning from './canvasHandler.js';
+import saveManager from './saveManager.js';
 export let rectangles = [];
 export let lines = [];
+import { setShapeDataArray } from './dataHandler.js';
+export let shapeID =0 ;
+
+export function getShapeID() {
+    return shapeID;
+}
+
+export function setShapeID(newShapeID) {
+    shapeID = newShapeID;
+}
+
 
 document.addEventListener('DOMContentLoaded', (event) => {
     const canvasContainer  = document.getElementById('canvasDiv');
@@ -15,8 +27,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
     let powerSource = false;
     let powered = false;
     let startX, startY;
-    let shapeID =0 ;
     
+    let shapeDataArray = [];
 
     let colorPowered = "#FFE01B";
     let colorSelected = "#FFC23C";
@@ -25,6 +37,20 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     let lineColor = "#182F4F"
     let lineWidth = 3;
+
+
+    // Add event listener to the Save button
+document.getElementById('saveBtn').addEventListener('click', () => {
+    saveManager.saveState(rectangles, lines);
+});
+
+document.getElementById('loadBtn').addEventListener('click', () => {
+    const loadedState = saveManager.loadState();
+    rectangles = loadedState.rectangles;
+    lines = loadedState.lines;
+    setShapeDataArray(loadedState.shapeDataArray); // Use the setter function to update shapeDataArray
+    drawRectangles();
+});
 
 
 
@@ -320,11 +346,6 @@ window.drawRectangles = drawRectangles;
     
     
     
-    
-    
-    
-    
-    
     canvas.addEventListener('drop', (event) => {
         event.preventDefault();
         
@@ -350,21 +371,15 @@ window.drawRectangles = drawRectangles;
     });
     
     
-    
-    
-
-
-
-
-    
 
       function deleteLine() {
         lines.forEach(line => {
             if (line.selected) {
                 rectangles.forEach(rect => {
-
+                    console.log(rectangles);
                     let tempLinesConnected = [...rect.linesConnected]; // Create a temporary copy for iteration
                     tempLinesConnected.forEach(linesConnected => {
+                        console.log(linesConnected);
                         if (linesConnected.lineID == line.lineID) {
                             let indexToRemove = rect.linesConnected.indexOf(linesConnected);
                             if (indexToRemove > -1) { // Make sure the element was found in the array
@@ -408,18 +423,6 @@ window.drawRectangles = drawRectangles;
 
 function power(rect){
 
-    rect.linesConnected.forEach(lineConnected => 
-     {
-
-        if(lineConnected.powered == true){
-            rect.powered = true;
-        }
-     }
-    );
-
-    if(rect.linesConnected.length === 0 && rect.powerSource == false) {
-        rect.powered = false;
-    }
 
 }
 

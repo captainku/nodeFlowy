@@ -1,11 +1,22 @@
 import { rectangles, lines  } from './shapes.js';
+
+
+let lineID =0;
+export function getLineID() {
+    return lineID;
+}
+
+export function setLineID(newlineID) {
+    lineID = newlineID;
+    console.log("Reciieved" + lineID);
+}
 document.addEventListener('DOMContentLoaded', (event) => {
 const canvas = document.getElementById('myCanvas');
 let isMouseDown = false;
 const canvasContainer  = document.getElementById('canvasDiv');
 let startX, startY;
 let selectedShape;
-let lineID =0;
+
 let currentMousePosition = { x: 0, y: 0 };
 let lastMousePosition = { x: 0, y: 0 };
 const snapThreshold = 50; // Adjust the threshold as needed
@@ -13,6 +24,8 @@ const snapThreshold = 50; // Adjust the threshold as needed
 let powerSource = false;
 let powered = false;
 let lineColor = "#182F4F"
+
+
 
 
 
@@ -30,7 +43,8 @@ function handleMouseDown(event) {
     let rect = rectangles.find(rect => isMouseInsideRectangle(rect, event.offsetX, event.offsetY));
     let handle = null;
     let clickedLine = null;
-    if (rect) {
+    if (rect) 
+    {
         addShapeData(rect);
         handle = rect.handles.find(hdl => isMouseInsideHandle(rect, hdl, event.offsetX, event.offsetY));
         selectedShape = {
@@ -43,7 +57,7 @@ function handleMouseDown(event) {
             rect.selected = true;
 
             // If Ctrl key is not held down, clear other selections
-            if (!event.ctrlKey) {
+            if (!event.ctrlKey ) {
                 rectangles.forEach(otherRect => {
                     if (otherRect != rect) {
                         otherRect.selected = false;
@@ -51,9 +65,12 @@ function handleMouseDown(event) {
                 });
             }
         }
-    } else {
+    } 
+    else 
+    {
         // If click is not on a rectangle, clear all selected rectangles
         rectangles.forEach(rect => {
+            
             rect.selected = false;
         });
     }
@@ -219,6 +236,7 @@ function handleMouseMove(event) {
             else{
                 powered = false;
             }
+            console.log(lineID);
 
             lines.push({
         
