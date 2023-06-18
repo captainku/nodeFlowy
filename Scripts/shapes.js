@@ -530,17 +530,7 @@ function roundRect(ctx, x, y, width, height, roundness, rectColor, borderColor, 
 
 
 
-document.getElementById('circleHandle').addEventListener('click', function () {
-    const leftMenuContainer = document.getElementById('leftDock');
-    var circleHandle = document.getElementById('circleHandle');
-    document.querySelector('.parent').style.gridTemplateColumns = '20px 1fr';
 
-
-    const isHidden = leftMenuContainer.style.display === 'none';
-    leftMenuContainer.style.display = isHidden ? 'block' : 'none';
-    document.querySelector('.parent').style.gridTemplateColumns = isHidden ? '200px 1fr' : '20px 1fr';
-    circleHandle.style.left = isHidden ? '180px' : '0px'; // Adjust the '200px' as necessary
-});
 
 
 
