@@ -128,6 +128,7 @@ function handleMouseDown(event) {
     
 
     drawRectangles(selectedShape,currentMousePosition);
+    drawShapes();
 }
 
 
@@ -180,8 +181,9 @@ function handleMouseMove(event) {
             selectedShape.line.controlPoint[selectedShape.controlPoint.index].y = event.offsetY;
         }
 
-        drawRectangles(selectedShape, currentMousePosition);
+        drawShapes(selectedShape, currentMousePosition);
     }
+    
 
 }
 
@@ -190,6 +192,7 @@ function handleMouseMove(event) {
 
     //Mouse UP!!!
     function handleMouseUp(event) {
+        
         isMouseDown = false;
         if (selectedShape && selectedShape.handle) {
           let endRect = null;
@@ -263,7 +266,7 @@ function handleMouseMove(event) {
         }
         selectedShape = null;
 
-        drawRectangles(selectedShape,currentMousePosition, lines);
+        drawShapes(selectedShape,currentMousePosition, lines);
       }
 
       canvas.addEventListener('dblclick', function(e) {

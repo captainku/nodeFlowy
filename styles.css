@@ -48,6 +48,18 @@
             margin: 10px;
             border-radius: 5px;
         }
+
+        .draggable-circle{
+            width: 50px;
+            height: 50px;
+            position: relative;
+            margin: 10px;
+            border-radius: 50%; /* to create a circle shape */
+        }
+
+
+
+
         
         #greenBlock {
             background-color: #429053;
@@ -65,6 +77,9 @@
         }
         #offBlock {
             background-color: #00060e;
+        }
+        #circle {
+            background-color: #0678FF;
         }
         
         #circleHandle {
