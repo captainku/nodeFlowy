@@ -256,7 +256,7 @@ function addCircle(x, y, color, powerSource) {
     };
     addShapeData(newCircle);
     circles.push(newCircle);
-    drawCircles();
+
 }
 
 // Draw circles on the canvas
@@ -295,13 +295,6 @@ function drawCircles() {
     });
     
 }
-
-
-
-
-
-
-
 
 //DRAWING LINES ✏ -----------------------------------------
     function drawLines() {
@@ -470,7 +463,7 @@ function drawCircles() {
             console.log('No line is currently selected.');
         }
     
-        drawRectangles();
+        drawShapes();
     }
     
 //REMOVE CONTROL POINTS---------------------------------------------------------------------   
