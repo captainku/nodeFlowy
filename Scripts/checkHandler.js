@@ -7,15 +7,37 @@ function isMouseInsideRectangle(rect, mouseX, mouseY) {
         mouseY <= rect.y + rect.height
     );
 }
-
-function isMouseInsideHandle(rect, handle, mouseX, mouseY) {
-    return (
-        mouseX >= rect.x + handle.x &&
-        mouseX <= rect.x + handle.x + handle.width &&
-        mouseY >= rect.y + handle.y &&
-        mouseY <= rect.y + handle.y + handle.height
-    );
+function isMouseInsideCircle(circ, mouseX, mouseY) {
+    var dx = mouseX - circ.x;
+    var dy = mouseY - circ.y;  
+    return dx * dx + dy * dy <= circ.radius * circ.radius;
 }
+
+function isMouseInsideHandle(shape, handle, mouseX, mouseY) {
+    let handleX;
+    let handleY;
+
+    if ('radius' in shape) { // If the shape is a circle
+        handleX = shape.x + Math.cos(handle.angle) * (shape.radius - handle.radius); // handle position is determined by the angle
+        handleY = shape.y + Math.sin(handle.angle) * (shape.radius - handle.radius);
+
+        const distanceFromCenter = Math.sqrt(Math.pow(mouseX - handleX, 2) + Math.pow(mouseY - handleY, 2));
+        return distanceFromCenter <= handle.radius; // Check if the mouse is inside the handle's radius
+
+    } else { // If the shape is a rectangle
+        handleX = shape.x + handle.x;
+        handleY = shape.y + handle.y;
+
+        return (
+            mouseX >= handleX &&
+            mouseX <= handleX + handle.width &&
+            mouseY >= handleY &&
+            mouseY <= handleY + handle.height
+        );
+    }
+}
+
+
 
 function isMouseInsideControlPoint(line, mouseX, mouseY) {
     if (line.selected) {
@@ -34,3 +56,4 @@ function isMouseInsideControlPoint(line, mouseX, mouseY) {
 window.isMouseInsideControlPoint = isMouseInsideControlPoint;
 window.isMouseInsideHandle = isMouseInsideHandle;
 window.isMouseInsideRectangle = isMouseInsideRectangle;
+window.isMouseInsideCircle = isMouseInsideCircle;

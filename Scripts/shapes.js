@@ -38,11 +38,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 function drawShapes(selectedShape, currentMousePosition, lines) {
     context.clearRect(0, 0, canvas.width, canvas.height);  // clear the canvas
-    console.log("Drawing Shapes");
     // Draw all rectangles
      drawRectangles(selectedShape, currentMousePosition);
     // Draw lines between shapes
-    drawLines();
+    drawLines(lines);
     // Draw all circles
     drawCircles();
 
@@ -97,11 +96,21 @@ function drawRectangles(selectedShape,currentMousePosition, lines) {
     });
     // Draw the temporary line (from the selected handle to the current mouse position) over everything else
     if (selectedShape && selectedShape.handle) {
+        console.log(selectedShape);
         
-        const handleCenter = {
-            x: selectedShape.rectangle.x + selectedShape.handle.x + selectedShape.handle.width / 2,
-            y: selectedShape.rectangle.y + selectedShape.handle.y + selectedShape.handle.height / 2,
-        };
+        let handleCenter = {};
+
+        if ('radius' in selectedShape.shape) { // If the shape is a circle
+            handleCenter = {
+                x: selectedShape.shape.x + Math.cos(selectedShape.handle.angle) * selectedShape.shape.radius,
+                y: selectedShape.shape.y + Math.sin(selectedShape.handle.angle) * selectedShape.shape.radius,
+            };
+        } else { // If the shape is a rectangle
+            handleCenter = {
+                x: selectedShape.shape.x + selectedShape.handle.x + selectedShape.handle.width / 2,
+                y: selectedShape.shape.y + selectedShape.handle.y + selectedShape.handle.height / 2,
+            };
+        }
 
         context.beginPath();
         context.moveTo(handleCenter.x, handleCenter.y);
@@ -136,6 +145,7 @@ function addRectangle(x, y, color, powerSource) {
         color: color,
         colorPowered : colorPowered,
         shapeID: shapeID,
+        shapeType : 'rectangle',
         linesConnected :[],
         powerSource : powerSource,
         powered : powered,
@@ -214,8 +224,8 @@ window.drawRectangles = drawRectangles;
 function addCircle(x, y, color, powerSource) {
     if(powerSource ){powered = true};
     shapeID++;
-    const circleRadius = 25; // set radius of circle
-    const handleRadius = 5; // set radius of handle
+    const circleRadius = 40; // set radius of circle
+    const handleRadius = 7; // set radius of handle
     const handleColor = "#FFFFFF";
     const newCircle = {
         x: x,
@@ -227,54 +237,66 @@ function addCircle(x, y, color, powerSource) {
         linesConnected :[],
         powerSource : powerSource,
         powered : powered,
+        shapeType : "circle",
         handles: [
             {
-                angle: 0, // top handle
+                angle: 0, 
                 radius: handleRadius,
                 color: color,
-                borderColor: handleColor
+                borderColor: handleColor,
+                handleType: "rightside"
             },
             {
                 angle: Math.PI / 2, // right handle
                 radius: handleRadius,
                 color: color,
-                borderColor: handleColor
+                borderColor: handleColor,
+                handleType: "bottom"
             },
             {
                 angle: Math.PI, // bottom handle
                 radius: handleRadius,
                 color: color,
-                borderColor: handleColor
+                borderColor: handleColor,
+                handleType: "leftside"
             },
             {
                 angle: 3 * Math.PI / 2, // left handle
                 radius: handleRadius,
                 color: color,
-                borderColor: handleColor
+                borderColor: handleColor,
+                handleType: "top"
             }
         ]
     };
+
+    newCircle.handles.forEach(handle => {
+        handle.x = newCircle.x + Math.cos(handle.angle) * (circleRadius - handle.radius * 2);
+        handle.y = newCircle.y + Math.sin(handle.angle) * (circleRadius - handle.radius * 2);
+    });
+
     addShapeData(newCircle);
     circles.push(newCircle);
-
+    drawCircles();
 }
 
-// Draw circles on the canvas
+
 function drawCircles() {
 
     circles.forEach(circle => {
         power(circle);
         context.beginPath();
         context.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+        context.closePath();
         context.fillStyle = circle.powered ? circle.colorPowered : circle.color;
         context.fill();
 
         // Draw handles
         circle.handles.forEach(handle => {
             context.beginPath();
-            const handleX = circle.x + Math.cos(handle.angle) * circle.radius;
-            const handleY = circle.y + Math.sin(handle.angle) * circle.radius;
-            context.arc(handleX, handleY, handle.radius, 0, Math.PI * 2);
+            handle.x = circle.x + Math.cos(handle.angle) * (circle.radius - handle.radius);
+            handle.y = circle.y + Math.sin(handle.angle) * (circle.radius - handle.radius);
+            context.arc(handle.x, handle.y, handle.radius, 0, Math.PI * 2);
             context.fillStyle = handle.color;
             context.fill();
 
@@ -287,27 +309,47 @@ function drawCircles() {
         let text = nameHandle(circle.shapeID);
 
         // Add text to circle
-        context.font = "14px Arial";
+        context.font = "10px Arial";
         context.fillStyle = "black";
         context.textAlign = "center";
         context.textBaseline = "middle";
         context.fillText(text, circle.x, circle.y);
     });
-    
 }
+
+
 
 //DRAWING LINES ✏ -----------------------------------------
     function drawLines() {
+        
         // Draw lines between rectangles
         lines.forEach(line => {
-            const startHandleCenter = {
-                x: line.start.x + line.startHandle.x + line.startHandle.width / 2,
-                y: line.start.y + line.startHandle.y + line.startHandle.height / 2,
-            };
-            const endHandleCenter = {
-                x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
-                y: line.end.y + line.endHandle.y + line.endHandle.height / 2,
-            };
+            let startHandleCenter = {};
+            let endHandleCenter = {};
+        
+            if ('radius' in line.start) { // If the start shape is a circle
+                startHandleCenter = {
+                    x: line.start.x + Math.cos(line.startHandle.angle) * line.start.radius,
+                    y: line.start.y + Math.sin(line.startHandle.angle) * line.start.radius,
+                };
+            } else { // If the start shape is a rectangle
+                startHandleCenter = {
+                    x: line.start.x + line.startHandle.x + line.startHandle.width / 2,
+                    y: line.start.y + line.startHandle.y + line.startHandle.height / 2,
+                };
+            }
+        
+            if ('radius' in line.end) { // If the end shape is a circle
+                endHandleCenter = {
+                    x: line.end.x + Math.cos(line.endHandle.angle) * line.end.radius,
+                    y: line.end.y + Math.sin(line.endHandle.angle) * line.end.radius,
+                };
+            } else { // If the end shape is a rectangle
+                endHandleCenter = {
+                    x: line.end.x + line.endHandle.x + line.endHandle.width / 2,
+                    y: line.end.y + line.endHandle.y + line.endHandle.height / 2,
+                };
+            }
 
 
             const startHandleType = line.startHandle.handleType;
@@ -392,7 +434,6 @@ function drawCircles() {
         lines.forEach(line => {
             if (line.selected) {
                 rectangles.forEach(rect => {
-                    console.log(rectangles);
                     let tempLinesConnected = [...rect.linesConnected]; // Create a temporary copy for iteration
                     tempLinesConnected.forEach(linesConnected => {
                         console.log(linesConnected);
@@ -570,7 +611,6 @@ document.getElementById('loadBtn').addEventListener('click', () => {
         let color = '#429053';
 
         const draggedId = event.dataTransfer.getData('text');
-        console.log(draggedId);
         if(draggedId== "Green"){
             color = '#429053';
             powerSource = true;

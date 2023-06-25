@@ -1,4 +1,4 @@
-import { rectangles, lines  } from './shapes.js';
+import { rectangles, lines, circles  } from './shapes.js';
 
 
 let lineID =0;
@@ -41,14 +41,16 @@ function handleMouseDown(event) {
     startX = event.clientX - canvasContainer.offsetLeft;
     startY = event.clientY - canvasContainer.offsetTop;
     let rect = rectangles.find(rect => isMouseInsideRectangle(rect, event.offsetX, event.offsetY));
+    let circ = circles.find(circ => isMouseInsideCircle(circ, event.offsetX, event.offsetY));
     let handle = null;
     let clickedLine = null;
+    //if rectangle
     if (rect) 
     {
         addShapeData(rect);
         handle = rect.handles.find(hdl => isMouseInsideHandle(rect, hdl, event.offsetX, event.offsetY));
         selectedShape = {
-            rectangle: rect,
+            shape: rect,
             handle: handle
         };
 
@@ -63,9 +65,52 @@ function handleMouseDown(event) {
                         otherRect.selected = false;
                     }
                 });
+
+                circles.forEach(otherCirc => {
+                    if (otherCirc != circ) {
+                        otherCirc.selected = false;
+                    }
+                });
             }
         }
-    } 
+    }
+
+    else if(circ){
+        addShapeData(circ); // Assuming this function is applicable for circles too
+        handle = circ.handles.find(hdl => isMouseInsideHandle(circ, hdl, event.offsetX, event.offsetY));
+        console.log(handle);
+        selectedShape = {
+            shape: circ,
+            handle: handle
+            
+        };
+    
+        if(!handle){
+            // set selected to true without changing the state of all other circles
+            circ.selected = true;
+    
+            // If Ctrl key is not held down, clear other selections
+            if (!event.ctrlKey ) {
+                circles.forEach(otherCirc => {
+                    if (otherCirc != circ) {
+                        otherCirc.selected = false;
+                    }
+
+                    rectangles.forEach(otherRect => {
+                        if (otherRect != rect) {
+                            otherRect.selected = false;
+                        }
+                    });
+                });
+            }
+        }
+    }
+    
+    
+    
+    
+
+
     else 
     {
         // If click is not on a rectangle, clear all selected rectangles
@@ -137,7 +182,7 @@ function handleMouseDown(event) {
 function handleMouseMove(event) {
     event.preventDefault();
     if (selectedShape) {
-        
+        console.log(selectedShape);
             // Calculate the change in mouse position
     let deltaX = event.offsetX - lastMousePosition.x;
     let deltaY = event.offsetY - lastMousePosition.y;
@@ -145,19 +190,28 @@ function handleMouseMove(event) {
         if (selectedShape.handle) {
              currentMousePosition = { x: event.offsetX, y: event.offsetY };
         }
+        
 
         // Change position of the selected rectangle
-        else if (selectedShape.rectangle) {
+        else if (selectedShape.shape) {
             // Update the last mouse position
             lastMousePosition = { x: event.offsetX, y: event.offsetY };
 
             // If a rectangle is selected
-            if (selectedShape.rectangle) {
+            
+            if (selectedShape.shape) {
                 // Move all shapes relative to the mouse movement
+
                 rectangles.forEach(rect => {
+                    console.log(rect);
                     if(rect.selected){                    
                         rect.x += deltaX;
                         rect.y += deltaY;}
+                });
+                circles.forEach(circ => {
+                    if(circ.selected){                    
+                        circ.x += deltaX;
+                        circ.y += deltaY;}
 
                 });
             }
@@ -173,6 +227,17 @@ function handleMouseMove(event) {
                 }
             });
         }
+
+        if (selectedShape.circle) {
+            // Move all shapes relative to the mouse movement
+            circles.forEach(circ => {
+                if(circ.selected){
+                    circ.x = event.offsetX;
+                    circ.y = event.offsetY;
+                }
+            });
+        }
+  
 
         else if (selectedShape.controlPoint) {
             selectedShape.controlPoint.x = event.offsetX;
@@ -192,82 +257,89 @@ function handleMouseMove(event) {
 
     //Mouse UP!!!
     function handleMouseUp(event) {
-        
         isMouseDown = false;
         if (selectedShape && selectedShape.handle) {
-          let endRect = null;
+          let endShape = null;
           let endHandle = null;
           let minDistance = Infinity;
+    
+          // Combine rectangles and circles into one array
+          const shapes = [...rectangles, ...circles];
           
-          rectangles.forEach(rect => {
-            rect.handles.forEach(handle => {
-              const handleCenter = {
-                x: rect.x + handle.x + handle.width / 2,
-                y: rect.y + handle.y + handle.height / 2,
-              };
+          shapes.forEach(shape => {
+            shape.handles.forEach(handle => {
+              let handleCenter = {};
+    
+              if ('radius' in shape) { // If the shape is a circle
+                  handleCenter = {
+                      x: shape.x + Math.cos(handle.angle) * shape.radius,
+                      y: shape.y + Math.sin(handle.angle) * shape.radius,
+                  };
+              } else { // If the shape is a rectangle
+                  handleCenter = {
+                      x: shape.x + handle.x + handle.width / 2,
+                      y: shape.y + handle.y + handle.height / 2,
+                  };
+              }
+    
               const distance = Math.sqrt(
                 (handleCenter.x - event.offsetX) ** 2 + (handleCenter.y - event.offsetY) ** 2
               );
               
               if (distance <= snapThreshold && distance < minDistance) {
                 minDistance = distance;
-                endRect = rect;
+                endShape = shape;
                 endHandle = handle;
                 let audio = new Audio('Assets/plug.mp3');
                 audio.play();
-                lineID ++;
+                lineID++;
               }
             });
-            
-
-
           });
           
-          if (endRect && endRect !== selectedShape.rectangle && endHandle) {
+          if (endShape && endShape !== selectedShape.shape && endHandle) {
+            console.log(selectedShape);
             const startHandleCenter = {
-                x: selectedShape.rectangle.x + selectedShape.handle.x + selectedShape.handle.width / 2,
-                y: selectedShape.rectangle.y + selectedShape.handle.y + selectedShape.handle.height / 2,
+              x: selectedShape.shape.x + selectedShape.handle.x + selectedShape.handle.width / 2,
+              y: selectedShape.shape.y + selectedShape.handle.y + selectedShape.handle.height / 2,
             };
             const endHandleCenter = {
-                x: endRect.x + endHandle.x + endHandle.width / 2,
-                y: endRect.y + endHandle.y + endHandle.height / 2,
+              x: endShape.x + endHandle.x + endHandle.width / 2,
+              y: endShape.y + endHandle.y + endHandle.height / 2,
             };
-
-            if(selectedShape.rectangle.powered || endRect.powered == true){
-                powered = true;
+    
+            if(selectedShape.shape.powered || endShape.powered == true){
+              powered = true;
             }
             else{
-                powered = false;
+              powered = false;
             }
             console.log(lineID);
-
+    
             lines.push({
-        
-                start: selectedShape.rectangle,
-                end: endRect,
-                startHandle: selectedShape.handle,
-                startHandleType: selectedShape.handleType,
-                endHandle: endHandle,
-                startHandleCenter: {x: selectedShape.rectangle.x + selectedShape.handle.x + selectedShape.handle.width / 2,
-                y: selectedShape.rectangle.y + selectedShape.handle.y + selectedShape.handle.height / 2,},
-                endHandleCenter: {
-                    x: endRect.x + endHandle.x + endHandle.width / 2,
-                    y: endRect.y + endHandle.y + endHandle.height / 2,},
-                color: lineColor,
-                selected: false,
-                controlPoint: [],
-                controlPointsCount: 0, // Add this property
-                controlPointSelected: false,
-                isInitialDraw: true,
-                powered : powered,
-                lineID : lineID
+              start: selectedShape.shape,
+              end: endShape,
+              startHandle: selectedShape.handle,
+              startHandleType: selectedShape.handleType,
+              endHandle: endHandle,
+              startHandleCenter: startHandleCenter,
+              endHandleCenter: endHandleCenter,
+              color: lineColor,
+              selected: false,
+              controlPoint: [],
+              controlPointsCount: 0, 
+              controlPointSelected: false,
+              isInitialDraw: true,
+              powered: powered,
+              lineID: lineID
             });
           }
         }
         selectedShape = null;
-
-        drawShapes(selectedShape,currentMousePosition, lines);
+    
+        drawShapes(selectedShape, currentMousePosition, lines);
       }
+    
 
       canvas.addEventListener('dblclick', function(e) {
         // Get the mouse position relative to the canvas
